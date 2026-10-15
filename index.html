@@ -110,8 +110,8 @@
   <!-- Navegación escritorio -->
   <nav class="hidden md:block max-w-6xl mx-auto px-4" aria-label="Secciones">
     <div class="flex gap-1" role="tablist">
-      <button class="tab-btn relative px-4 py-3 font-semibold text-sm text-gray-300 hover:text-white flex items-center gap-2" data-tab="grupo" role="tab"><i data-lucide="users" class="w-4 h-4"></i>Agrupación y prioridad<span class="tab-ind absolute left-3 right-3 bottom-0 h-0.5 bg-vcf-orange opacity-0 rounded"></span></button>
       <button class="tab-btn relative px-4 py-3 font-semibold text-sm text-gray-300 hover:text-white flex items-center gap-2" data-tab="mapa" role="tab"><i data-lucide="map" class="w-4 h-4"></i>Plano y precios<span class="tab-ind absolute left-3 right-3 bottom-0 h-0.5 bg-vcf-orange opacity-0 rounded"></span></button>
+      <button class="tab-btn relative px-4 py-3 font-semibold text-sm text-gray-300 hover:text-white flex items-center gap-2" data-tab="grupo" role="tab"><i data-lucide="users" class="w-4 h-4"></i>Agrupación y prioridad<span class="tab-ind absolute left-3 right-3 bottom-0 h-0.5 bg-vcf-orange opacity-0 rounded"></span></button>
       <button class="tab-btn relative px-4 py-3 font-semibold text-sm text-gray-300 hover:text-white flex items-center gap-2" data-tab="ruta" role="tab"><i data-lucide="route" class="w-4 h-4"></i>Hoja de ruta y FAQs<span class="tab-ind absolute left-3 right-3 bottom-0 h-0.5 bg-vcf-orange opacity-0 rounded"></span></button>
     </div>
   </nav>
@@ -410,8 +410,8 @@
 <!-- Navegación móvil -->
 <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-vcf-line bg-[#0f0f0f]/95 backdrop-blur safe-bottom" aria-label="Secciones">
   <div class="grid grid-cols-3" role="tablist">
-    <button class="tab-btn flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold text-gray-400" data-tab="grupo" role="tab"><i data-lucide="users" class="w-5 h-5"></i>Agrupación</button>
     <button class="tab-btn flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold text-gray-400" data-tab="mapa" role="tab"><i data-lucide="map" class="w-5 h-5"></i>Plano y precios</button>
+    <button class="tab-btn flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold text-gray-400" data-tab="grupo" role="tab"><i data-lucide="users" class="w-5 h-5"></i>Agrupación</button>
     <button class="tab-btn flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold text-gray-400" data-tab="ruta" role="tab"><i data-lucide="route" class="w-5 h-5"></i>Hoja de ruta</button>
   </div>
 </nav>
@@ -1285,7 +1285,6 @@ function tick() {
 function setTab(tab) {
   $$('.tab-panel').forEach(p => p.classList.toggle('hidden', p.id !== 'tab-' + tab));
   $$('.tab-btn').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
-  try { localStorage.setItem('nouMestalla_tab', tab); } catch {}
   hideTip();
   window.scrollTo({ top: 0 });
 }
@@ -1304,8 +1303,7 @@ applyMapState();
 renderRoadmap();
 renderAll();
 resetForm();
-let tab = 'grupo'; try { tab = localStorage.getItem('nouMestalla_tab') || 'grupo'; } catch {}
-setTab(['grupo', 'mapa', 'ruta'].includes(tab) ? tab : 'grupo');
+setTab('mapa'); // siempre se abre en el plano de precios
 var timer = setInterval(tick, 1000); tick();
 icons();
 </script>
