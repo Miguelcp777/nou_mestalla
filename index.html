@@ -6,6 +6,13 @@
 <title>Agrupación Nou Mestalla</title>
 <meta name="description" content="Herramienta no oficial para organizar nuestra agrupación de socios en el proceso 'Camí a una nova casa' del Nou Mestalla.">
 <meta name="theme-color" content="#111111">
+<link rel="icon" type="image/png" href="escudo.png">
+<link rel="apple-touch-icon" href="escudo.png">
+<meta property="og:title" content="Peña Valencianista San Antonio de Benagéber · Nou Mestalla">
+<meta property="og:description" content="Organiza la agrupación para sentarnos juntos en el Nou Mestalla: prioridad, plano con precios y hoja de ruta.">
+<meta property="og:image" content="https://nou-mestalla.netlify.app/escudo.png">
+<meta property="og:url" content="https://nou-mestalla.netlify.app/">
+<meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -80,7 +87,7 @@
         <div class="min-w-0">
           <p class="text-[11px] uppercase tracking-[.18em] text-vcf-gold font-semibold">Camí a una nova casa · 2027/28</p>
           <h1 class="font-display text-3xl sm:text-4xl leading-none tracking-wide">
-            <span id="groupTitle">Nuestra Agrupación</span> <span class="text-vcf-orange">· Nou Mestalla</span>
+            <span id="groupTitle">Peña Valencianista San Antonio de Benagéber</span> <span class="text-vcf-orange">· Nou Mestalla</span>
           </h1>
         </div>
       </div>
@@ -551,7 +558,9 @@ async function copyText(text) {
    ESTADO
    ===================================================================== */
 const STORE_KEY = 'nouMestalla_agrupacion_v1';
-let state = Object.assign({ groupName: '', groupId: '', logo: '', members: [], showSensitive: false, colorMode: 'grada', selected: null, zoom: 1 }, store.get(STORE_KEY, {}));
+// Valores por defecto de nuestra penya (se aplican en la primera visita y al borrar todo)
+const DEFAULT_GROUP = { groupName: 'Peña Valencianista San Antonio de Benagéber', logo: 'escudo.png' };
+let state = Object.assign({ groupName: DEFAULT_GROUP.groupName, groupId: '', logo: DEFAULT_GROUP.logo, members: [], showSensitive: false, colorMode: 'grada', selected: null, zoom: 1 }, store.get(STORE_KEY, {}));
 state.showSensitive = false; // siempre ocultos al abrir
 function save() {
   const { showSensitive, ...persist } = state;
@@ -617,7 +626,7 @@ const mask = (v, show) => !v ? '<span class="text-gray-600">—</span>' : (show 
 
 function renderGroup() {
   const ms = state.members;
-  $('#groupTitle').textContent = state.groupName || 'Nuestra Agrupación';
+  $('#groupTitle').textContent = state.groupName || DEFAULT_GROUP.groupName;
   $('#kTotal').textContent = ms.length;
   $('#kOk').textContent = ms.filter(m => m.status === 'aceptada').length;
   $('#kPend').textContent = ms.filter(m => m.status !== 'aceptada').length;
@@ -773,7 +782,7 @@ $('#memberList').addEventListener('click', e => {
   if (st) { const m = state.members.find(x => x.id === st.dataset.toggleStatus); m.status = m.status === 'aceptada' ? 'pendiente' : 'aceptada'; save(); renderAll(); }
 });
 $('#eyeAll').addEventListener('click', () => { state.showSensitive = !state.showSensitive; renderGroup(); });
-$('#gName').addEventListener('input', e => { state.groupName = e.target.value; save(); $('#groupTitle').textContent = state.groupName || 'Nuestra Agrupación'; });
+$('#gName').addEventListener('input', e => { state.groupName = e.target.value; save(); $('#groupTitle').textContent = state.groupName || DEFAULT_GROUP.groupName; });
 $('#gId').addEventListener('input', e => { state.groupId = e.target.value; save(); });
 
 /* ---------- Exportación ---------- */
@@ -782,7 +791,7 @@ function whatsappText() {
   const ms2 = [...ms].sort((a, b) => (b.role === 'capitan') - (a.role === 'capitan'));
   const left = DATA.phase1Close - new Date();
   const d = Math.max(0, Math.floor(left / 864e5)), h = Math.max(0, Math.floor(left / 36e5) % 24);
-  let t = `🦇 *${state.groupName || 'Nuestra Agrupación'}* · Nou Mestalla 2027/28\n`;
+  let t = `🦇 *${state.groupName || DEFAULT_GROUP.groupName}* · Nou Mestalla 2027/28\n`;
   if (state.groupId) t += `🆔 Grupo: ${state.groupId}\n`;
   t += '\n';
   if (p.mode === 'historico') t += `📊 *Prioridad: ${fmtNum(p.value)}* (excepción histórico de ${p.holder.name})\n`;
@@ -825,10 +834,10 @@ $('#moreMenu').addEventListener('click', e => {
   const a = e.target.closest('[data-act]')?.dataset.act; if (!a) return;
   $('#moreMenu').classList.add('hidden');
   if (a === 'json') download('agrupacion-nou-mestalla-backup.json', JSON.stringify({ groupName: state.groupName, groupId: state.groupId, logo: state.logo, members: state.members }, null, 2), 'application/json');
-  if (a === 'clear' && confirm('¿Borrar todos los miembros y datos guardados en este navegador?')) { state.members = []; state.groupName = ''; state.groupId = ''; state.logo = ''; save(); syncInputs(); renderAll(); resetForm(); toast('Datos borrados'); }
+  if (a === 'clear' && confirm('¿Borrar todos los miembros y datos guardados en este navegador?')) { state.members = []; state.groupName = DEFAULT_GROUP.groupName; state.groupId = ''; state.logo = DEFAULT_GROUP.logo; save(); syncInputs(); renderAll(); resetForm(); toast('Datos borrados'); }
   if (a === 'demo' && (!state.members.length || confirm('Esto sustituirá la lista actual por un ejemplo. ¿Continuar?'))) {
     const mk = (o) => Object.assign({ id: String(Math.random()).slice(2), role: 'miembro', status: 'pendiente', socioId: '', pin: '', socioNum: '', birth: '', ageTariff: 'adulto', category: 'general', attendance: '0', shareholder: false, alBalance: 0, alRenewal: 0, pmr: false }, o);
-    state.groupName = 'Penya d\'Exemple'; state.groupId = '';
+    state.groupId = '';
     state.members = [
       mk({ name: 'Vicent (capità)', role: 'capitan', status: 'aceptada', socioId: 'A1234567', pin: '1234', socioNum: 8450, birth: '1975-03-12', attendance: '100' }),
       mk({ name: 'Amparo', status: 'aceptada', socioId: 'B7654321', pin: '5678', socioNum: 15320, birth: '1960-02-02', ageTariff: 'senior', shareholder: true }),
@@ -847,7 +856,7 @@ $('#importFile').addEventListener('change', e => {
       const d = JSON.parse(rd.result);
       if (!Array.isArray(d.members)) throw 0;
       state.members = d.members.map(m => ({ ...m, id: m.id || String(Math.random()).slice(2), name: String(m.name || 'Sin nombre') }));
-      state.groupName = d.groupName || ''; state.groupId = d.groupId || ''; state.logo = typeof d.logo === 'string' && d.logo.startsWith('data:image/') ? d.logo : '';
+      state.groupName = d.groupName || ''; state.groupId = d.groupId || ''; state.logo = typeof d.logo === 'string' && (d.logo.startsWith('data:image/') || d.logo === DEFAULT_GROUP.logo) ? d.logo : '';
       save(); syncInputs(); renderAll(); resetForm(); toast('Copia restaurada');
     } catch { toast('Archivo no válido'); }
     e.target.value = '';
