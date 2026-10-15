@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agrupación Nou Mestalla</title>
+<meta name="description" content="Herramienta no oficial para organizar nuestra agrupación de socios en el proceso 'Camí a una nova casa' del Nou Mestalla.">
+<meta name="theme-color" content="#111111">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          vcf: { black: '#111111', coal: '#1a1a1a', card: '#181818', line: '#2a2a2a', orange: '#FF6600', gold: '#C9A227', goldlight: '#E6C766' }
+        },
+        fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], display: ['"Bebas Neue"', 'Inter', 'sans-serif'] }
+      }
+    }
+  };
+</script>
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<style>
+  :root { --bg: #0b0b0b; --card: #181818; --line: #2a2a2a; --orange: #FF6600; --gold: #C9A227; --text: #f4f4f4; --muted: #9a9a9a; }
+  html, body { background: var(--bg); color: var(--text); }
+  body { -webkit-tap-highlight-color: transparent; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 1rem; }
+  .field { width: 100%; background: #0f0f0f; border: 1px solid #333; border-radius: .65rem; padding: .6rem .75rem; color: #fff; font-size: .95rem; }
+  .field:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,102,0,.18); }
+  .field option { background: #111; }
+  .lbl { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: .3rem; font-weight: 600; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; border-radius: .7rem; padding: .6rem 1rem; font-weight: 600; font-size: .9rem; transition: all .15s; white-space: nowrap; }
+  .btn-primary { background: var(--orange); color: #111; }
+  .btn-primary:hover { background: #ff7a22; }
+  .btn-ghost { background: #222; color: #eee; border: 1px solid #333; }
+  .btn-ghost:hover { border-color: var(--orange); color: #fff; }
+  .btn-icon { padding: .45rem; border-radius: .55rem; background: #222; border: 1px solid #333; color: #ddd; }
+  .btn-icon:hover { border-color: var(--orange); color: var(--orange); }
+  .badge { display: inline-flex; align-items: center; gap: .25rem; font-size: .7rem; font-weight: 700; padding: .15rem .5rem; border-radius: 999px; }
+  .tab-btn[aria-selected="true"] { color: var(--orange); }
+  .tab-btn[aria-selected="true"] .tab-ind { opacity: 1; }
+  .gold-text { background: linear-gradient(90deg, #E6C766, #C9A227); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .cd-box { background: #141414; border: 1px solid #2c2c2c; border-radius: .7rem; min-width: 3.4rem; }
+  /* Mapa */
+  #stadium .sec { cursor: pointer; transition: opacity .15s, filter .15s; stroke: #0b0b0b; stroke-width: 1.4; }
+  #stadium .sec:hover { filter: brightness(1.18); stroke: #fff; stroke-width: 2; }
+  #stadium .sec.sel { stroke: #fff; stroke-width: 3.5; filter: brightness(1.1) drop-shadow(0 0 6px rgba(255,255,255,.6)); }
+  #stadium .sec.dim { opacity: .18; }
+  #stadium .sec.na { cursor: help; }
+  #stadium .lab { pointer-events: none; font-family: Inter, sans-serif; font-weight: 700; fill: #1a1a1a; text-anchor: middle; dominant-baseline: central; }
+  #stadium .lab.light { fill: #fff; }
+  #stadium .gap { fill: #3a3a3a; stroke: #0b0b0b; stroke-width: 1.4; }
+  #tooltip { pointer-events: none; }
+  .map-scroll { overflow: auto; -webkit-overflow-scrolling: touch; border-radius: 1rem; }
+  .tier-row { cursor: pointer; }
+  .tier-row:hover, .tier-row.active { background: rgba(255,102,0,.1); }
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  details[open] .chev { transform: rotate(180deg); }
+  .chev { transition: transform .2s; }
+  .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.simple th { font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 700; text-align: left; padding: .5rem .6rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  table.simple td { padding: .55rem .6rem; border-bottom: 1px solid #222; font-size: .85rem; white-space: nowrap; }
+  .toast { transition: all .25s; }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  ::-webkit-scrollbar { height: 8px; width: 8px; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 8px; }
+</style>
+</head>
+<body class="font-sans min-h-screen pb-24 md:pb-10">
+
+<!-- ============ CABECERA ============ -->
+<header class="relative overflow-hidden border-b border-vcf-line" style="background: radial-gradient(circle at 85% -20%, rgba(255,102,0,.28), transparent 55%), linear-gradient(180deg,#141414,#0b0b0b);">
+  <div class="max-w-6xl mx-auto px-4 pt-5 pb-4">
+    <div class="flex items-start justify-between gap-3 flex-wrap">
+      <div class="flex items-center gap-3 min-w-0">
+        <button type="button" id="logoHeader" class="logo-pick w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-xl flex items-center justify-center text-2xl overflow-hidden relative group" style="background:linear-gradient(135deg,#FF6600,#C9A227)" title="Cambiar escudo de la penya" aria-label="Cambiar escudo de la penya">🦇</button>
+        <div class="min-w-0">
+          <p class="text-[11px] uppercase tracking-[.18em] text-vcf-gold font-semibold">Camí a una nova casa · 2027/28</p>
+          <h1 class="font-display text-3xl sm:text-4xl leading-none tracking-wide">
+            <span id="groupTitle">Nuestra Agrupación</span> <span class="text-vcf-orange">· Nou Mestalla</span>
+          </h1>
+        </div>
+      </div>
+      <div class="w-full sm:w-auto">
+        <p class="text-[11px] uppercase tracking-widest text-gray-400 mb-1.5 flex items-center gap-1.5"><i data-lucide="timer" class="w-3.5 h-3.5 text-vcf-orange"></i><span id="cdLabel">Cierre Fase 1 · 30 oct 2026 · 12:00h</span></p>
+        <div id="countdown" class="flex gap-2">
+          <div class="cd-box text-center px-2 py-1.5"><div id="cdD" class="font-display text-3xl leading-none text-white">--</div><div class="text-[10px] text-gray-400 uppercase">días</div></div>
+          <div class="cd-box text-center px-2 py-1.5"><div id="cdH" class="font-display text-3xl leading-none text-white">--</div><div class="text-[10px] text-gray-400 uppercase">horas</div></div>
+          <div class="cd-box text-center px-2 py-1.5"><div id="cdM" class="font-display text-3xl leading-none text-white">--</div><div class="text-[10px] text-gray-400 uppercase">min</div></div>
+          <div class="cd-box text-center px-2 py-1.5"><div id="cdS" class="font-display text-3xl leading-none text-vcf-orange">--</div><div class="text-[10px] text-gray-400 uppercase">seg</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200 flex gap-2 items-start">
+      <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+      <span>Aviso del club en la página de la Fase 1: el proceso se cerró temporalmente por la alta demanda en las altas de Socio VCF. Consultad siempre la <a class="underline font-semibold" href="https://www.valenciacf.com/fase-1-creaciondegrupos" target="_blank" rel="noopener">web oficial</a> antes de actuar.</span>
+    </div>
+  </div>
+
+  <!-- Navegación escritorio -->
+  <nav class="hidden md:block max-w-6xl mx-auto px-4" aria-label="Secciones">
+    <div class="flex gap-1" role="tablist">
+      <button class="tab-btn relative px-4 py-3 font-semibold text-sm text-gray-300 hover:text-white flex items-center gap-2" data-tab="grupo" role="tab"><i data-lucide="users" class="w-4 h-4"></i>Agrupación y prioridad<span class="tab-ind absolute left-3 right-3 bottom-0 h-0.5 bg-vcf-orange opacity-0 rounded"></span></button>
+      <button class="tab-btn relative px-4 py-3 font-semibold text-sm text-gray-300 hover:text-white flex items-center gap-2" data-tab="mapa" role="tab"><i data-lucide="map" class="w-4 h-4"></i>Plano y precios<span class="tab-ind absolute left-3 right-3 bottom-0 h-0.5 bg-vcf-orange opacity-0 rounded"></span></button>
+      <button class="tab-btn relative px-4 py-3 font-semibold text-sm text-gray-300 hover:text-white flex items-center gap-2" data-tab="ruta" role="tab"><i data-lucide="route" class="w-4 h-4"></i>Hoja de ruta y FAQs<span class="tab-ind absolute left-3 right-3 bottom-0 h-0.5 bg-vcf-orange opacity-0 rounded"></span></button>
+    </div>
+  </nav>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 py-5">
+
+<!-- =============================================================== -->
+<!-- PESTAÑA 1 · AGRUPACIÓN                                            -->
+<!-- =============================================================== -->
+<section id="tab-grupo" class="tab-panel space-y-5" role="tabpanel">
+
+  <!-- KPI prioridad -->
+  <div class="grid gap-4 lg:grid-cols-3">
+    <div class="card p-5 lg:col-span-2 relative overflow-hidden">
+      <div class="absolute -right-10 -top-10 w-48 h-48 rounded-full" style="background:radial-gradient(circle,rgba(255,102,0,.25),transparent 70%)"></div>
+      <p class="lbl flex items-center gap-1.5"><i data-lucide="calculator" class="w-3.5 h-3.5"></i>Número de socio promedio del grupo</p>
+      <div class="flex items-end gap-3 flex-wrap">
+        <div id="prioValue" class="font-display text-6xl sm:text-7xl leading-none text-vcf-orange">—</div>
+        <div id="prioMode" class="pb-2 text-sm text-gray-300"></div>
+      </div>
+      <p class="text-xs text-gray-400 mt-2">Cuanto más bajo, antes será la cita de la Fase 2. Ojo: el promedio <b>no</b> es tu número de turno; el orden real lo publica el club tras el cierre.</p>
+      <div id="prioBreakdown" class="mt-4 text-sm"></div>
+    </div>
+    <div class="card p-5 space-y-3">
+      <p class="lbl flex items-center gap-1.5"><i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i>Estado del grupo</p>
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="bg-black/40 rounded-xl py-2"><div id="kTotal" class="font-display text-3xl">0</div><div class="text-[10px] text-gray-400 uppercase">miembros</div></div>
+        <div class="bg-black/40 rounded-xl py-2"><div id="kOk" class="font-display text-3xl text-emerald-400">0</div><div class="text-[10px] text-gray-400 uppercase">aceptadas</div></div>
+        <div class="bg-black/40 rounded-xl py-2"><div id="kPend" class="font-display text-3xl text-amber-400">0</div><div class="text-[10px] text-gray-400 uppercase">pendientes</div></div>
+      </div>
+      <div id="alerts" class="space-y-2 text-xs"></div>
+    </div>
+  </div>
+
+  <!-- Datos del grupo + acciones -->
+  <div class="card p-4 sm:p-5">
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 items-end">
+      <div>
+        <label class="lbl" for="gName">Nombre de la agrupación</label>
+        <div class="flex gap-2 items-center">
+          <button type="button" id="logoForm" class="logo-pick w-11 h-11 shrink-0 rounded-lg border border-dashed border-gray-600 hover:border-vcf-orange flex items-center justify-center overflow-hidden bg-black/40 text-gray-400" title="Subir escudo o imagen de la penya" aria-label="Subir escudo o imagen de la penya"><i data-lucide="image-plus" class="w-5 h-5"></i></button>
+          <input id="gName" class="field" placeholder="Ej. Penya Els de Sempre" maxlength="60">
+        </div>
+        <div class="flex gap-3 mt-1 text-[11px]">
+          <button type="button" class="logo-pick text-vcf-orange hover:underline">Subir escudo / imagen</button>
+          <button type="button" id="logoRemove" class="hidden text-gray-400 hover:text-red-400">Quitar</button>
+        </div>
+        <input id="logoFile" type="file" accept="image/*" class="hidden">
+      </div>
+      <div>
+        <label class="lbl" for="gId">ID de grupo (lo da la web al crearlo)</label>
+        <input id="gId" class="field" placeholder="Opcional" maxlength="40">
+      </div>
+      <div class="sm:col-span-2 flex flex-wrap gap-2 lg:justify-end">
+        <button id="btnWhats" class="btn btn-primary"><i data-lucide="message-circle" class="w-4 h-4"></i>Copiar resumen WhatsApp</button>
+        <button id="btnCsv" class="btn btn-ghost"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i>Exportar Excel/CSV</button>
+        <div class="relative">
+          <button id="btnMore" class="btn btn-ghost" aria-haspopup="true"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button>
+          <div id="moreMenu" class="hidden absolute right-0 mt-2 w-60 card p-1 z-30 shadow-2xl">
+            <button data-act="json" class="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i>Copia de seguridad (.json)</button>
+            <label class="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm flex items-center gap-2 cursor-pointer"><i data-lucide="upload" class="w-4 h-4"></i>Restaurar copia (.json)<input id="importFile" type="file" accept="application/json,.json" class="hidden"></label>
+            <button data-act="demo" class="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm flex items-center gap-2"><i data-lucide="sparkles" class="w-4 h-4"></i>Cargar ejemplo</button>
+            <button data-act="clear" class="w-full text-left px-3 py-2 rounded-lg hover:bg-red-500/10 text-red-400 text-sm flex items-center gap-2"><i data-lucide="trash-2" class="w-4 h-4"></i>Borrar todos los datos</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <label class="mt-3 inline-flex items-center gap-2 text-xs text-gray-400 cursor-pointer"><input id="waSensitive" type="checkbox" class="accent-orange-500"> Incluir ID y PIN en el resumen de WhatsApp (no recomendado en grupos grandes)</label>
+  </div>
+
+  <div class="grid gap-5 lg:grid-cols-5">
+    <!-- Formulario -->
+    <form id="memberForm" class="card p-4 sm:p-5 lg:col-span-2 space-y-4" autocomplete="off" novalidate>
+      <div class="flex items-center justify-between">
+        <h2 id="formTitle" class="font-display text-2xl tracking-wide flex items-center gap-2"><i data-lucide="user-plus" class="w-5 h-5 text-vcf-orange"></i>Añadir miembro</h2>
+        <button type="button" id="formCancel" class="hidden text-xs text-gray-400 hover:text-white">Cancelar edición</button>
+      </div>
+      <input type="hidden" id="fId">
+
+      <div>
+        <label class="lbl" for="fName">Nombre / apodo *</label>
+        <input id="fName" class="field" required maxlength="40" placeholder="Ej. Pepe el del bombo">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="lbl" for="fRole">Rol</label>
+          <select id="fRole" class="field"><option value="miembro">Miembro</option><option value="capitan">Capitán</option></select>
+        </div>
+        <div>
+          <label class="lbl" for="fStatus">Estado en la web</label>
+          <select id="fStatus" class="field"><option value="pendiente">Invitación pendiente</option><option value="aceptada">Aceptada</option></select>
+        </div>
+      </div>
+
+      <fieldset class="rounded-xl border border-vcf-line p-3 space-y-3">
+        <legend class="px-1 text-xs text-vcf-gold font-semibold flex items-center gap-1.5"><i data-lucide="lock" class="w-3.5 h-3.5"></i>Credenciales para el registro</legend>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="lbl" for="fSocioId">ID de socio</label>
+            <div class="relative">
+              <input id="fSocioId" type="password" class="field pr-9" maxlength="20" autocomplete="off">
+              <button type="button" class="pw-toggle absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-vcf-orange" data-target="fSocioId" aria-label="Mostrar u ocultar"><i data-lucide="eye" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div>
+            <label class="lbl" for="fPin">PIN (4 últ. DNI)</label>
+            <div class="relative">
+              <input id="fPin" type="password" inputmode="numeric" class="field pr-9" maxlength="4" autocomplete="off">
+              <button type="button" class="pw-toggle absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-vcf-orange" data-target="fPin" aria-label="Mostrar u ocultar"><i data-lucide="eye" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+        </div>
+        <p class="text-[11px] text-gray-500">Se acceden con ID + PIN. El PIN son los 4 últimos dígitos del DNI registrado en el club. Se guardan solo en este navegador.</p>
+      </fieldset>
+
+      <div>
+        <label class="lbl" for="fNum">Número de socio (antigüedad)</label>
+        <input id="fNum" type="number" inputmode="numeric" min="1" class="field" placeholder="Ej. 12345">
+        <p class="text-[11px] text-amber-300/80 mt-1 flex gap-1"><i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i>NO es el ID. Es el número de antigüedad que marca el orden de cita (más bajo = antes).</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="lbl" for="fBirth">Fecha de nacimiento</label>
+          <input id="fBirth" type="date" class="field" min="1900-01-01" max="2027-12-31">
+        </div>
+        <div>
+          <label class="lbl" for="fAge">Tarifa de edad</label>
+          <select id="fAge" class="field">
+            <option value="adulto">Adulto</option>
+            <option value="juvenil">Juvenil (−10%)</option>
+            <option value="infantil">Infantil (−50%)</option>
+            <option value="senior">+65 años (−10%)</option>
+          </select>
+        </div>
+      </div>
+      <p id="ageHint" class="text-[11px] text-gray-500 -mt-2">Con la fecha de nacimiento se calcula automáticamente la tarifa y si es menor de 16.</p>
+
+      <div>
+        <label class="lbl" for="fCat">Categoría / excepción de prioridad</label>
+        <select id="fCat" class="field">
+          <option value="general">General</option>
+          <option value="menor">Menor de 16 (nacido desde el 01/06/2011) · no computa</option>
+          <option value="historico">Abonado histórico +50 años (socio nº 1–393)</option>
+          <option value="espera">Antigua lista de espera 2007 · computa como 40.000</option>
+        </select>
+      </div>
+
+      <fieldset class="rounded-xl border border-vcf-line p-3 space-y-3">
+        <legend class="px-1 text-xs text-vcf-gold font-semibold flex items-center gap-1.5"><i data-lucide="percent" class="w-3.5 h-3.5"></i>Descuentos en el abono</legend>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="lbl" for="fAtt">Asistencia 2026-27</label>
+            <select id="fAtt" class="field">
+              <option value="0">Ninguna / &lt;80%</option>
+              <option value="80">≥80% (−10%)</option>
+              <option value="100">100% (−15%)</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <label class="flex items-center gap-2 text-sm cursor-pointer pb-2.5"><input id="fShare" type="checkbox" class="w-4 h-4 accent-orange-500">Accionista ≥11 acciones (−5%)</label>
+          </div>
+        </div>
+        <p class="text-[11px] text-gray-500 -mt-1">Solo se aplica el mayor entre asistencia y accionista.</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="lbl" for="fAl">Saldo Asiento Libre (€)</label>
+            <input id="fAl" type="number" inputmode="decimal" min="0" step="0.01" class="field" placeholder="0">
+          </div>
+          <div>
+            <label class="lbl" for="fAlRen">Renovación asiento actual (€)</label>
+            <input id="fAlRen" type="number" inputmode="decimal" min="0" step="0.01" class="field" placeholder="Opcional">
+          </div>
+        </div>
+        <p class="text-[11px] text-gray-500 -mt-1">Acumulas el 40% de cada entrada vendida. Tope: 50% del precio de renovación de tu asiento <b>actual</b> (si lo dejas vacío, se usa el 50% del abono simulado).</p>
+      </fieldset>
+
+      <label class="flex items-start gap-3 rounded-xl border border-sky-500/30 bg-sky-500/5 p-3 cursor-pointer">
+        <input id="fPmr" type="checkbox" class="w-4 h-4 mt-0.5 accent-sky-400">
+        <span class="text-sm"><span class="font-semibold flex items-center gap-1.5"><i data-lucide="accessibility" class="w-4 h-4 text-sky-400"></i>Necesita plaza PMR en silla de ruedas</span><span class="block text-[11px] text-gray-400">Fila 29 de la Grada Baja. El capitán marca la casilla al crear el grupo.</span></span>
+      </label>
+
+      <button type="submit" id="formSubmit" class="btn btn-primary w-full"><i data-lucide="plus" class="w-4 h-4"></i>Añadir al grupo</button>
+    </form>
+
+    <!-- Lista -->
+    <div class="lg:col-span-3 space-y-3">
+      <div class="flex items-center justify-between gap-2">
+        <h2 class="font-display text-2xl tracking-wide">Miembros</h2>
+        <button id="eyeAll" class="btn btn-ghost !py-1.5 text-xs" aria-pressed="false"><i data-lucide="eye-off" class="w-4 h-4"></i><span>Mostrar ID/PIN</span></button>
+      </div>
+      <div id="memberList" class="space-y-3"></div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!-- PESTAÑA 2 · MAPA Y PRECIOS                                        -->
+<!-- =============================================================== -->
+<section id="tab-mapa" class="tab-panel hidden space-y-5" role="tabpanel">
+  <div class="grid gap-5 lg:grid-cols-5">
+    <div class="card p-3 sm:p-4 lg:col-span-3">
+      <div class="flex items-center justify-between gap-2 flex-wrap mb-3">
+        <div>
+          <h2 class="font-display text-2xl tracking-wide leading-none">Plano del Nou Mestalla</h2>
+          <p class="text-xs text-gray-400 mt-1">Pasa el ratón (o toca) un sector para ver su precio. Pulsa para simularlo.</p>
+        </div>
+        <div class="flex gap-1.5 items-center flex-wrap">
+          <div class="inline-flex rounded-lg border border-vcf-line overflow-hidden text-xs" role="group" aria-label="Color del plano">
+            <button class="colormode px-2.5 py-1.5 bg-vcf-orange text-black font-semibold" data-mode="grada">Grada</button>
+            <button class="colormode px-2.5 py-1.5 text-gray-300" data-mode="precio">Precio</button>
+          </div>
+          <button id="zoomOut" class="btn-icon" aria-label="Alejar"><i data-lucide="zoom-out" class="w-4 h-4"></i></button>
+          <button id="zoomIn" class="btn-icon" aria-label="Acercar"><i data-lucide="zoom-in" class="w-4 h-4"></i></button>
+          <button id="toggleOfficial" class="btn-icon" aria-label="Ver plano oficial" title="Ver plano oficial del club"><i data-lucide="image" class="w-4 h-4"></i></button>
+        </div>
+      </div>
+      <div id="mapWrap" class="relative">
+        <div id="mapScroll" class="map-scroll bg-black/40">
+          <div id="mapInner" style="width:100%">
+            <svg id="stadium" viewBox="0 0 1000 900" class="w-full h-auto block select-none" role="img" aria-label="Plano interactivo del Nou Mestalla por sectores"></svg>
+          </div>
+        </div>
+        <div id="tooltip" class="hidden absolute z-20 card px-3 py-2 text-xs shadow-2xl max-w-[240px]" style="background:#0f0f0f;border-color:#3a3a3a"></div>
+      </div>
+      <div id="officialWrap" class="hidden mt-3">
+        <p class="text-xs text-gray-400 mb-2">Plano y tabla oficiales publicados por el Valencia CF (<a class="underline" href="https://www.valenciacf.com/precio" target="_blank" rel="noopener">valenciacf.com/precio</a>):</p>
+        <div class="grid sm:grid-cols-2 gap-2">
+          <img src="https://www.valenciacf.com/public/Image/2026/10/tabladeprecios-02.jpg" alt="Plano oficial de sectores del Nou Mestalla" class="rounded-xl w-full bg-white" loading="lazy">
+          <img src="https://www.valenciacf.com/public/Image/2026/10/tabladeprecios-03.jpg" alt="Tabla oficial de precios por sector" class="rounded-xl w-full bg-white" loading="lazy">
+        </div>
+      </div>
+      <div id="legend" class="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-gray-300"></div>
+      <div class="mt-3">
+        <label class="lbl" for="sectorSelect">O elige un sector</label>
+        <select id="sectorSelect" class="field"></select>
+      </div>
+    </div>
+
+    <div class="lg:col-span-2 space-y-4">
+      <div id="sectorDetail" class="card p-4 sm:p-5"></div>
+    </div>
+  </div>
+
+  <div id="simCard" class="card p-4 sm:p-5"></div>
+
+  <div class="card p-4 sm:p-5">
+    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+      <h3 class="font-display text-2xl tracking-wide">Tabla comparativa de precios</h3>
+      <p class="text-xs text-gray-400">Pulsa una fila para resaltar esos sectores en el plano.</p>
+    </div>
+    <div class="scroll-x">
+      <table class="simple w-full" id="tierTable"></table>
+    </div>
+    <p class="text-[11px] text-gray-500 mt-3">Fuente: tabla oficial de precios del Valencia CF (temporada 2027-28). Los sectores 338–345 y 438–445 (afición visitante) no aparecen en la tabla de abonos. Hospitality y Grada Premium tienen productos propios.</p>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!-- PESTAÑA 3 · HOJA DE RUTA                                         -->
+<!-- =============================================================== -->
+<section id="tab-ruta" class="tab-panel hidden space-y-5" role="tabpanel">
+  <div class="card p-4 sm:p-6">
+    <h2 class="font-display text-3xl tracking-wide mb-5">Hoja de ruta oficial</h2>
+    <ol id="timeline" class="relative border-l-2 border-vcf-line ml-3 space-y-7"></ol>
+  </div>
+
+  <div class="grid gap-5 lg:grid-cols-3">
+    <div class="card p-4 sm:p-5 lg:col-span-2">
+      <h2 class="font-display text-3xl tracking-wide mb-3">Guía rápida · FAQs</h2>
+      <div id="faqs" class="divide-y divide-vcf-line"></div>
+    </div>
+    <div class="space-y-4">
+      <div class="card p-4 sm:p-5">
+        <h3 class="font-display text-2xl tracking-wide mb-3">Enlaces oficiales</h3>
+        <div id="links" class="space-y-2"></div>
+      </div>
+      <div class="card p-4 sm:p-5">
+        <h3 class="font-display text-2xl tracking-wide mb-2">El estadio en cifras</h3>
+        <ul class="text-sm space-y-1.5 text-gray-300">
+          <li class="flex justify-between"><span>Aforo total</span><b class="text-white">70.044</b></li>
+          <li class="flex justify-between"><span>Hospitality</span><b class="text-white">+6.500</b></li>
+          <li class="flex justify-between"><span>Grada de Animación</span><b class="text-white">2.235</b></li>
+          <li class="flex justify-between"><span>Plazas PMR (Grada Baja)</span><b class="text-white">90 + 90 acomp.</b></li>
+          <li class="flex justify-between"><span>Torres de acceso</span><b class="text-white">12</b></li>
+          <li class="flex justify-between"><span>Cubierta</span><b class="text-white">100% localidades</b></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <p class="text-[11px] text-gray-500 text-center px-4">Herramienta <b>no oficial</b> creada por y para socios. No está vinculada al Valencia CF. Los datos se guardan únicamente en este navegador. La información oficial del club siempre prevalece.</p>
+</section>
+</main>
+
+<!-- Navegación móvil -->
+<nav class="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-vcf-line bg-[#0f0f0f]/95 backdrop-blur safe-bottom" aria-label="Secciones">
+  <div class="grid grid-cols-3" role="tablist">
+    <button class="tab-btn flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold text-gray-400" data-tab="grupo" role="tab"><i data-lucide="users" class="w-5 h-5"></i>Agrupación</button>
+    <button class="tab-btn flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold text-gray-400" data-tab="mapa" role="tab"><i data-lucide="map" class="w-5 h-5"></i>Plano y precios</button>
+    <button class="tab-btn flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold text-gray-400" data-tab="ruta" role="tab"><i data-lucide="route" class="w-5 h-5"></i>Hoja de ruta</button>
+  </div>
+</nav>
+
+<div id="toast" class="toast fixed left-1/2 -translate-x-1/2 bottom-24 md:bottom-8 z-50 opacity-0 pointer-events-none translate-y-2 bg-white text-black text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl"></div>
+
+<script>
+/* =====================================================================
+   DATOS OFICIALES (verificados en valenciacf.com, octubre 2026)
+   Centralizados aquí para poder corregirlos fácilmente.
+   ===================================================================== */
+const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+
+const DATA = {
+  phase1Open: new Date('2026-10-14T10:00:00+02:00'),
+  phase1Close: new Date('2026-10-30T12:00:00+01:00'),
+  phase2Start: new Date('2026-11-17T00:00:00+01:00'),
+  minorCutoff: '2011-06-01',      // nacidos desde esta fecha: <16 (no computan) y tarifa Infantil
+  juvenilFrom: '2002-06-01',      // Juvenil: 01/06/2002 – 31/05/2011
+  seniorBefore: '1962-06-01',     // +65: nacidos hasta el 31/05/1962
+  waitingListValue: 40000,
+  historicMaxGroup: 5,
+  ageDiscount: { adulto: 0, juvenil: 0.10, infantil: 0.50, senior: 0.10 },
+  ageLabel: { adulto: 'Adulto', juvenil: 'Juvenil', infantil: 'Infantil', senior: '+65' },
+  attendanceDiscount: { '0': 0, '80': 0.10, '100': 0.15 },
+  shareholderDiscount: 0.05,
+  asientoLibreCap: 0.50,
+  pmrPrice: 300,
+  pmrSectors: [100, 110, 111, 112, 120, 121, 131, 132, 133, 140, 141],
+  animacion: range(116, 119),
+  visitorFixed: [338, 339, 340, 438, 439, 440],
+  visitorUefa: [...range(341, 345), ...range(441, 445)],
+  tiers: [
+    { grada: 'baja', price: 1700, sectors: [103, 107, 124, 128] },
+    { grada: 'baja', price: 1400, sectors: [101, 102, 108, 109, 122, 123, 129, 130] },
+    { grada: 'baja', price: 1100, sectors: [100, 110, 121, 131] },
+    { grada: 'baja', price: 750, sectors: [...range(111, 115), 120, ...range(132, 141)] },
+    { grada: 'media', price: 1100, sectors: [202, 213, 232, 242] },
+    { grada: 'media', price: 900, sectors: [200, 201, 214, 215, 230, 231, 243, 244] },
+    { grada: 'media', price: 700, sectors: [...range(216, 219), ...range(226, 229), ...range(245, 248), ...range(255, 258)] },
+    { grada: 'media', price: 600, sectors: [...range(220, 225), ...range(249, 254)] },
+    { grada: 'alta', price: 650, sectors: [...range(302, 307), ...range(327, 332)] },
+    { grada: 'alta', price: 550, sectors: [300, 301, 308, 309, 325, 326, 333, 334] },
+    { grada: 'alta', price: 450, sectors: [...range(310, 313), ...range(321, 324), ...range(335, 337), ...range(349, 352)] },
+    { grada: 'alta', price: 400, sectors: [...range(314, 320), ...range(346, 348)] },
+    { grada: 'superior', price: 450, sectors: range(402, 407) },
+    { grada: 'superior', price: 400, sectors: [400, 401, 408, 409, ...range(425, 434)] },
+    { grada: 'superior', price: 350, sectors: [...range(410, 413), ...range(421, 424), ...range(435, 437), ...range(449, 452)] },
+    { grada: 'superior', price: 300, sectors: [...range(414, 420), ...range(446, 448)] },
+    { grada: 'animacion', price: 340, sectors: range(116, 119) }
+  ],
+  gradas: {
+    baja: { name: 'Grada Baja', color: '#FFD200', light: false, range: '100–141',
+      access: 'Acceso llano desde la calle por el perímetro. Primer nivel, a pie de campo.',
+      view: 'Máxima cercanía al césped.',
+      notes: 'Fila 29 (última) con plazas PMR en sectores 100, 110, 111, 112, 120, 121, 131, 132, 133, 140 y 141.' },
+    media: { name: 'Grada Media', color: '#46B5D1', light: false, range: '200–258',
+      access: 'Acceso desde la calle por el perímetro y escaleras interiores.',
+      view: 'Segundo nivel: altura intermedia, visión táctica equilibrada.',
+      notes: 'Entre la Media y la Alta está la Grada Premium (3 filas, Hospitality).' },
+    alta: { name: 'Grada Alta', color: '#F2541B', light: true, range: '300–352',
+      access: 'Acceso por las 12 torres de comunicación vertical del perímetro hasta las bocanas superiores.',
+      view: 'Franja inferior del tercer nivel: visión panorámica.',
+      notes: 'Sectores 338–340 reservados a la afición visitante (ampliable a 341–345 en UEFA).' },
+    superior: { name: 'Grada Superior', color: '#FF9478', light: false, range: '400–452',
+      access: 'Acceso por las 12 torres de comunicación vertical del perímetro.',
+      view: 'Franja superior del tercer nivel, bajo la cubierta.',
+      notes: 'Sectores 438–440 reservados a la afición visitante (ampliable a 441–445 en UEFA).' },
+    animacion: { name: 'Grada de Animación', color: '#CF94C9', light: false, range: '116–119',
+      access: 'Grada Baja Norte, con acceso llano. Normativa específica y obligatoria en accesos (coordinada con LaLiga).',
+      view: 'Fondo Norte, a pie de campo. Aforo de 2.235 personas.',
+      notes: 'Precio único de 340 €.' }
+  },
+  sides: {
+    oeste: { name: 'Oeste', street: 'Av. de les Corts Valencianes · Dama Ibérica', info: 'Lateral a cota 0 (nivel de calle).' },
+    norte: { name: 'Norte', street: 'Palau de Congresos · C. Bernardo Españeta', info: 'Fondo Norte. Incluye la Grada de Animación (116–119).' },
+    este:  { name: 'Este', street: 'Benicalap · C. Nicasio Benlloch', info: 'Lateral con el murciélago dibujado en la grada. Acceso en semisótano: a la Grada Baja se sube un piso (escaleras/rampas) o se entra por la pasarela exterior de 360º.' },
+    sur:   { name: 'Sur', street: 'Nuevo Centro · C. Amics del Corpus', info: 'Fondo Sur. Incluye la zona de afición visitante.' }
+  },
+  links: [
+    { label: 'Conoce el Nou Mestalla', url: 'https://www.valenciacf.com/conoce-el-nou-mestalla', icon: 'building-2' },
+    { label: 'Fase 1 · Creación de grupos', url: 'https://www.valenciacf.com/fase-1-creaciondegrupos', icon: 'users' },
+    { label: 'Precios y plano', url: 'https://www.valenciacf.com/precio', icon: 'euro' },
+    { label: 'Visor 3D oficial', url: 'https://www.valenciacf.com/3d', icon: 'box' },
+    { label: 'Camí a una nova casa (fases)', url: 'https://www.valenciacf.com/camiaunanovacasa', icon: 'route' },
+    { label: 'Tarifas y descuentos', url: 'https://www.valenciacf.com/tarifas', icon: 'percent' },
+    { label: 'Descuentos abonos 26-27', url: 'https://www.valenciacf.com/descuentos-abonos-26-27', icon: 'badge-percent' }
+  ]
+};
+
+// Índice sector → info de precio
+const SECTOR_PRICE = {};
+DATA.tiers.forEach(t => t.sectors.forEach(s => { SECTOR_PRICE[s] = { price: t.price, grada: t.grada }; }));
+
+function gradaOf(n) {
+  if (DATA.animacion.includes(n)) return 'animacion';
+  return { 1: 'baja', 2: 'media', 3: 'alta', 4: 'superior' }[Math.floor(n / 100)];
+}
+function sectorStatus(n) {
+  if (DATA.visitorFixed.includes(n)) return 'visitante';
+  if (DATA.visitorUefa.includes(n)) return 'uefa';
+  return SECTOR_PRICE[n] ? 'ok' : 'na';
+}
+
+/* =====================================================================
+   UTILIDADES
+   ===================================================================== */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function fmtNum(n, d = 0) {
+  const neg = n < 0; const [i, f] = Math.abs(n).toFixed(d).split('.');
+  return (neg ? '-' : '') + i.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (f ? ',' + f : '');
+}
+const eur = (n, d = 2) => fmtNum(n, d) + ' €';
+const eur0 = n => fmtNum(n, Number.isInteger(n) ? 0 : 2) + ' €';
+const icons = () => { if (window.lucide) lucide.createIcons(); };
+const store = {
+  get(k, def) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } }
+};
+let toastT;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg;
+  t.classList.remove('opacity-0', 'translate-y-2');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('opacity-0', 'translate-y-2'), 2400);
+}
+function download(name, content, type) {
+  const blob = new Blob([content], { type });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch {
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch {}
+    ta.remove(); return ok;
+  }
+}
+
+/* =====================================================================
+   ESTADO
+   ===================================================================== */
+const STORE_KEY = 'nouMestalla_agrupacion_v1';
+let state = Object.assign({ groupName: '', groupId: '', logo: '', members: [], showSensitive: false, colorMode: 'grada', selected: null, zoom: 1 }, store.get(STORE_KEY, {}));
+state.showSensitive = false; // siempre ocultos al abrir
+function save() {
+  const { showSensitive, ...persist } = state;
+  if (!store.set(STORE_KEY, persist)) toast('No se pudo guardar en este navegador');
+}
+
+/* =====================================================================
+   REGLAS: EDAD, PRIORIDAD Y PRECIO
+   ===================================================================== */
+function ageTariffFromBirth(birth) {
+  if (!birth) return null;
+  if (birth >= DATA.minorCutoff) return 'infantil';
+  if (birth >= DATA.juvenilFrom) return 'juvenil';
+  if (birth < DATA.seniorBefore) return 'senior';
+  return 'adulto';
+}
+const isMinor = m => m.category === 'menor' || (m.birth && m.birth >= DATA.minorCutoff);
+
+/** Número de socio promedio según las reglas oficiales de la Fase 1. */
+function calcPriority(members) {
+  const rows = members.map(m => {
+    const num = Number(m.socioNum) || 0;
+    if (isMinor(m)) return { m, included: false, value: null, reason: 'Menor de 16: no computa' };
+    if (m.category === 'espera') return { m, included: true, value: DATA.waitingListValue, reason: 'Lista de espera 2007 → 40.000' };
+    if (!num) return { m, included: false, value: null, reason: 'Falta el nº de socio', missing: true };
+    return { m, included: true, value: num, reason: m.category === 'historico' ? 'Histórico' : 'Nº de socio' };
+  });
+  const historics = members.filter(m => m.category === 'historico' && Number(m.socioNum) > 0);
+  if (historics.length && members.length <= DATA.historicMaxGroup) {
+    const h = historics.reduce((a, b) => (Number(a.socioNum) <= Number(b.socioNum) ? a : b));
+    return { mode: 'historico', value: Number(h.socioNum), holder: h, rows };
+  }
+  const inc = rows.filter(r => r.included);
+  if (!inc.length) return { mode: 'none', value: null, rows };
+  const avg = inc.reduce((s, r) => s + r.value, 0) / inc.length;
+  return { mode: 'promedio', value: avg, count: inc.length, rows, historicsIgnored: historics.length > 0 };
+}
+
+/** Cascada de descuentos (orden: edad → mayor de asistencia/accionista → Asiento Libre con tope). */
+function calcPrice(m, sector) {
+  const pmrHere = m.pmr && DATA.pmrSectors.includes(sector);
+  const base = pmrHere ? DATA.pmrPrice : (SECTOR_PRICE[sector]?.price ?? 0);
+  const ageKey = m.ageTariff || 'adulto';
+  const agePct = DATA.ageDiscount[ageKey] || 0;
+  const afterAge = base * (1 - agePct);
+  const attPct = DATA.attendanceDiscount[m.attendance || '0'] || 0;
+  const sharePct = m.shareholder ? DATA.shareholderDiscount : 0;
+  const bestPct = Math.max(attPct, sharePct);
+  const bestLabel = bestPct === 0 ? '—' : (attPct >= sharePct ? `Asistencia ${m.attendance}%` : 'Accionista');
+  const afterBest = afterAge * (1 - bestPct);
+  const renewal = Number(m.alRenewal) || 0;
+  const cap = DATA.asientoLibreCap * (renewal > 0 ? renewal : afterBest);
+  const al = Math.min(Number(m.alBalance) || 0, cap, afterBest);
+  const final = Math.max(0, afterBest - al);
+  return { base, pmrHere, pmrWarn: m.pmr && !pmrHere, ageKey, agePct, afterAge, bestPct, bestLabel, afterBest, cap, al, final, capFromRenewal: renewal > 0 };
+}
+const r2 = n => Math.round(n * 100) / 100;
+
+/* =====================================================================
+   PESTAÑA 1 · RENDER
+   ===================================================================== */
+const mask = (v, show) => !v ? '<span class="text-gray-600">—</span>' : (show ? `<span class="font-mono">${esc(v)}</span>` : '<span class="font-mono tracking-widest text-gray-500">••••</span>');
+
+function renderGroup() {
+  const ms = state.members;
+  $('#groupTitle').textContent = state.groupName || 'Nuestra Agrupación';
+  $('#kTotal').textContent = ms.length;
+  $('#kOk').textContent = ms.filter(m => m.status === 'aceptada').length;
+  $('#kPend').textContent = ms.filter(m => m.status !== 'aceptada').length;
+
+  // Prioridad
+  const p = calcPriority(ms);
+  const pv = $('#prioValue'), pm = $('#prioMode'), pb = $('#prioBreakdown');
+  if (p.mode === 'none') { pv.textContent = '—'; pm.innerHTML = ms.length ? 'Ningún miembro computable todavía.' : 'Añade miembros para calcularlo.'; }
+  else if (p.mode === 'historico') {
+    pv.textContent = fmtNum(p.value);
+    pm.innerHTML = `<span class="badge bg-vcf-gold/20 text-vcf-goldlight"><i data-lucide="crown" class="w-3 h-3"></i>Excepción histórico</span><br><span class="text-xs text-gray-400">Grupo de ${ms.length} ≤ ${DATA.historicMaxGroup}: se usa directamente el nº de ${esc(p.holder.name)}.</span>`;
+  } else {
+    pv.textContent = fmtNum(Math.round(p.value));
+    pm.innerHTML = `<span class="text-xs text-gray-400">Media exacta: ${fmtNum(p.value, 2)} · ${p.count} computable${p.count > 1 ? 's' : ''}</span>` +
+      (p.historicsIgnored ? `<br><span class="text-xs text-amber-300">Hay un histórico pero el grupo supera ${DATA.historicMaxGroup} personas: se promedia normal.</span>` : '');
+  }
+  pb.innerHTML = ms.length ? `<div class="flex flex-wrap gap-1.5">${p.rows.map(r => `
+      <span class="badge ${r.included ? 'bg-white/5 text-gray-200 border border-white/10' : 'bg-red-500/10 text-red-300 border border-red-500/20 line-through decoration-red-400/60'}" title="${esc(r.reason)}">
+        ${esc(r.m.name)}: ${r.value != null ? fmtNum(r.value) : '—'}${r.included ? '' : ''}
+      </span>`).join('')}</div>
+      <p class="text-[11px] text-gray-500 mt-2">Tachado = no computa (menor de 16 o sin número). Lista de espera 2007 computa como 40.000.</p>` : '';
+
+  // Alertas
+  const al = [];
+  const caps = ms.filter(m => m.role === 'capitan');
+  if (ms.length && !caps.length) al.push(['amber', 'alert-triangle', 'Falta designar un Capitán: es quien crea el grupo y va a la cita de la Fase 2.']);
+  if (caps.length > 1) al.push(['red', 'alert-octagon', `Hay ${caps.length} capitanes. Solo puede haber uno.`]);
+  const pend = ms.filter(m => m.status !== 'aceptada' && m.role !== 'capitan');
+  if (pend.length) al.push(['amber', 'mail-warning', `Pendientes de aceptar: ${pend.map(m => esc(m.name)).join(', ')}. Sin aceptar no forman parte del grupo.`]);
+  const miss = ms.filter(m => !isMinor(m) && m.category !== 'espera' && !Number(m.socioNum));
+  if (miss.length) al.push(['amber', 'hash', `Falta nº de socio: ${miss.map(m => esc(m.name)).join(', ')}.`]);
+  const noCred = ms.filter(m => !m.socioId || !m.pin);
+  if (noCred.length) al.push(['slate', 'key-round', `Sin ID o PIN guardado: ${noCred.map(m => esc(m.name)).join(', ')}.`]);
+  if (ms.some(m => m.pmr)) al.push(['sky', 'accessibility', 'Hay PMR en el grupo: el Capitán debe marcar la casilla de silla de ruedas al crear el grupo (fila 29, Grada Baja).']);
+  if (ms.length && !al.length) al.push(['emerald', 'check-circle-2', '¡Todo en orden! Grupo listo para el registro.']);
+  const col = { amber: 'border-amber-500/30 bg-amber-500/10 text-amber-200', red: 'border-red-500/30 bg-red-500/10 text-red-200', sky: 'border-sky-500/30 bg-sky-500/10 text-sky-200', emerald: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200', slate: 'border-white/10 bg-white/5 text-gray-300' };
+  $('#alerts').innerHTML = al.map(([c, i, t]) => `<div class="rounded-lg border px-2.5 py-2 flex gap-2 ${col[c]}"><i data-lucide="${i}" class="w-4 h-4 shrink-0"></i><span>${t}</span></div>`).join('');
+
+  // Lista
+  const show = state.showSensitive;
+  $('#eyeAll').innerHTML = `<i data-lucide="${show ? 'eye' : 'eye-off'}" class="w-4 h-4"></i><span>${show ? 'Ocultar' : 'Mostrar'} ID/PIN</span>`;
+  $('#eyeAll').setAttribute('aria-pressed', show);
+  const catBadge = { general: '', menor: '<span class="badge bg-purple-500/15 text-purple-300">Menor 16</span>', historico: '<span class="badge bg-vcf-gold/20 text-vcf-goldlight">Histórico</span>', espera: '<span class="badge bg-cyan-500/15 text-cyan-300">Lista espera 2007</span>' };
+  const sorted = [...ms].sort((a, b) => (b.role === 'capitan') - (a.role === 'capitan'));
+  $('#memberList').innerHTML = sorted.length ? sorted.map(m => {
+    const disc = [];
+    if (m.ageTariff && m.ageTariff !== 'adulto') disc.push(DATA.ageLabel[m.ageTariff] + ' −' + DATA.ageDiscount[m.ageTariff] * 100 + '%');
+    const best = Math.max(DATA.attendanceDiscount[m.attendance || '0'], m.shareholder ? DATA.shareholderDiscount : 0);
+    if (best) disc.push((DATA.attendanceDiscount[m.attendance || '0'] >= (m.shareholder ? .05 : 0) ? 'Asist. ' + m.attendance + '%' : 'Accionista') + ' −' + best * 100 + '%');
+    if (Number(m.alBalance) > 0) disc.push('Asiento Libre ' + eur0(Number(m.alBalance)));
+    return `
+    <article class="card p-4 ${m.role === 'capitan' ? 'ring-1 ring-vcf-gold/50' : ''}">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            ${m.role === 'capitan' ? '<i data-lucide="crown" class="w-4 h-4 text-vcf-gold"></i>' : ''}
+            <h3 class="font-bold text-base truncate">${esc(m.name)}</h3>
+            ${m.role === 'capitan' ? '<span class="badge bg-vcf-gold text-black">Capitán</span>' :
+              (m.status === 'aceptada' ? '<span class="badge bg-emerald-500/15 text-emerald-300"><i data-lucide="check" class="w-3 h-3"></i>Aceptada</span>' : '<span class="badge bg-amber-500/15 text-amber-300"><i data-lucide="clock" class="w-3 h-3"></i>Pendiente</span>')}
+            ${catBadge[m.category] || ''}
+            ${m.pmr ? '<span class="badge bg-sky-500/15 text-sky-300"><i data-lucide="accessibility" class="w-3 h-3"></i>PMR</span>' : ''}
+          </div>
+          <div class="grid grid-cols-3 gap-3 mt-3 text-xs">
+            <div><div class="text-gray-500 uppercase text-[10px] font-semibold">Nº socio</div><div class="font-display text-xl leading-tight">${m.socioNum ? fmtNum(Number(m.socioNum)) : '—'}</div></div>
+            <div><div class="text-gray-500 uppercase text-[10px] font-semibold">ID</div><div class="mt-1">${mask(m.socioId, show)}</div></div>
+            <div><div class="text-gray-500 uppercase text-[10px] font-semibold">PIN</div><div class="mt-1">${mask(m.pin, show)}</div></div>
+          </div>
+          ${disc.length ? `<div class="flex flex-wrap gap-1 mt-2">${disc.map(d => `<span class="badge bg-vcf-orange/10 text-orange-300">${esc(d)}</span>`).join('')}</div>` : ''}
+        </div>
+        <div class="flex flex-col gap-1.5 shrink-0">
+          ${m.role !== 'capitan' ? `<button class="btn-icon" data-toggle-status="${m.id}" title="${m.status === 'aceptada' ? 'Marcar pendiente' : 'Marcar aceptada'}" aria-label="Cambiar estado"><i data-lucide="${m.status === 'aceptada' ? 'rotate-ccw' : 'check-check'}" class="w-4 h-4"></i></button>` : ''}
+          <button class="btn-icon" data-edit="${m.id}" aria-label="Editar"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+          <button class="btn-icon hover:!text-red-400 hover:!border-red-500" data-del="${m.id}" aria-label="Eliminar"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+        </div>
+      </div>
+    </article>`;
+  }).join('') : `<div class="card p-8 text-center text-gray-400"><i data-lucide="users" class="w-10 h-10 mx-auto mb-2 text-gray-600"></i><p class="font-semibold text-gray-200">Aún no hay miembros</p><p class="text-sm mt-1">Empieza por el Capitán con el formulario.</p></div>`;
+  icons();
+}
+
+/* ---------- Formulario ---------- */
+const F = id => $('#' + id);
+function resetForm() {
+  $('#memberForm').reset(); F('fId').value = '';
+  F('fSocioId').type = 'password'; F('fPin').type = 'password';
+  $('#formTitle').innerHTML = '<i data-lucide="user-plus" class="w-5 h-5 text-vcf-orange"></i>Añadir miembro';
+  $('#formSubmit').innerHTML = '<i data-lucide="plus" class="w-4 h-4"></i>Añadir al grupo';
+  $('#formCancel').classList.add('hidden');
+  if (!state.members.some(m => m.role === 'capitan')) F('fRole').value = 'capitan', F('fStatus').value = 'aceptada';
+  updateAgeHint(); icons();
+}
+function fillForm(m) {
+  F('fId').value = m.id; F('fName').value = m.name; F('fRole').value = m.role; F('fStatus').value = m.status;
+  F('fSocioId').value = m.socioId || ''; F('fPin').value = m.pin || ''; F('fNum').value = m.socioNum || '';
+  F('fBirth').value = m.birth || ''; F('fAge').value = m.ageTariff || 'adulto'; F('fCat').value = m.category || 'general';
+  F('fAtt').value = m.attendance || '0'; F('fShare').checked = !!m.shareholder; F('fAl').value = m.alBalance || '';
+  F('fAlRen').value = m.alRenewal || ''; F('fPmr').checked = !!m.pmr;
+  $('#formTitle').innerHTML = '<i data-lucide="pencil" class="w-5 h-5 text-vcf-orange"></i>Editar miembro';
+  $('#formSubmit').innerHTML = '<i data-lucide="save" class="w-4 h-4"></i>Guardar cambios';
+  $('#formCancel').classList.remove('hidden');
+  updateAgeHint(); icons();
+  $('#memberForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function updateAgeHint() {
+  const b = F('fBirth').value, hint = $('#ageHint');
+  if (!b) { hint.textContent = 'Con la fecha de nacimiento se calcula automáticamente la tarifa y si es menor de 16.'; hint.className = 'text-[11px] text-gray-500 -mt-2'; return; }
+  const t = ageTariffFromBirth(b);
+  hint.innerHTML = `Tarifa según fecha: <b>${DATA.ageLabel[t]}</b>${b >= DATA.minorCutoff ? ' · <b>menor de 16: no computa en el promedio</b>' : ''}.`;
+  hint.className = 'text-[11px] text-vcf-goldlight -mt-2';
+}
+F('fBirth').addEventListener('change', () => {
+  const b = F('fBirth').value; if (!b) return updateAgeHint();
+  F('fAge').value = ageTariffFromBirth(b);
+  if (b >= DATA.minorCutoff) F('fCat').value = 'menor';
+  else if (F('fCat').value === 'menor') F('fCat').value = 'general';
+  updateAgeHint();
+});
+F('fPin').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4); });
+$$('.pw-toggle').forEach(b => b.addEventListener('click', () => { const i = F(b.dataset.target); i.type = i.type === 'password' ? 'text' : 'password'; }));
+$('#formCancel').addEventListener('click', resetForm);
+
+$('#memberForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = F('fName').value.trim();
+  if (!name) { F('fName').focus(); toast('El nombre es obligatorio'); return; }
+  const pin = F('fPin').value.trim();
+  if (pin && pin.length !== 4) { F('fPin').focus(); toast('El PIN debe tener 4 dígitos'); return; }
+  const cat = F('fCat').value, num = Number(F('fNum').value) || '';
+  if (cat === 'historico' && num && num > 393) toast('Aviso: los históricos tienen nº de socio entre 1 y 393');
+  const id = F('fId').value || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
+  const role = F('fRole').value;
+  const m = {
+    id, name, role, status: role === 'capitan' ? 'aceptada' : F('fStatus').value,
+    socioId: F('fSocioId').value.trim(), pin, socioNum: num,
+    birth: F('fBirth').value, ageTariff: F('fAge').value, category: cat,
+    attendance: F('fAtt').value, shareholder: F('fShare').checked,
+    alBalance: Number(F('fAl').value) || 0, alRenewal: Number(F('fAlRen').value) || 0, pmr: F('fPmr').checked
+  };
+  if (role === 'capitan') state.members.forEach(x => { if (x.id !== id && x.role === 'capitan') x.role = 'miembro'; });
+  const idx = state.members.findIndex(x => x.id === id);
+  if (idx >= 0) state.members[idx] = m; else state.members.push(m);
+  save(); renderAll(); resetForm();
+  toast(idx >= 0 ? 'Miembro actualizado' : `${name} añadido al grupo`);
+});
+
+$('#memberList').addEventListener('click', e => {
+  const ed = e.target.closest('[data-edit]'), del = e.target.closest('[data-del]'), st = e.target.closest('[data-toggle-status]');
+  if (ed) fillForm(state.members.find(m => m.id === ed.dataset.edit));
+  if (del) {
+    const m = state.members.find(x => x.id === del.dataset.del);
+    if (confirm(`¿Eliminar a ${m.name} del grupo?`)) { state.members = state.members.filter(x => x.id !== m.id); save(); renderAll(); }
+  }
+  if (st) { const m = state.members.find(x => x.id === st.dataset.toggleStatus); m.status = m.status === 'aceptada' ? 'pendiente' : 'aceptada'; save(); renderAll(); }
+});
+$('#eyeAll').addEventListener('click', () => { state.showSensitive = !state.showSensitive; renderGroup(); });
+$('#gName').addEventListener('input', e => { state.groupName = e.target.value; save(); $('#groupTitle').textContent = state.groupName || 'Nuestra Agrupación'; });
+$('#gId').addEventListener('input', e => { state.groupId = e.target.value; save(); });
+
+/* ---------- Exportación ---------- */
+function whatsappText() {
+  const ms = state.members, p = calcPriority(ms), sens = $('#waSensitive').checked;
+  const ms2 = [...ms].sort((a, b) => (b.role === 'capitan') - (a.role === 'capitan'));
+  const left = DATA.phase1Close - new Date();
+  const d = Math.max(0, Math.floor(left / 864e5)), h = Math.max(0, Math.floor(left / 36e5) % 24);
+  let t = `🦇 *${state.groupName || 'Nuestra Agrupación'}* · Nou Mestalla 2027/28\n`;
+  if (state.groupId) t += `🆔 Grupo: ${state.groupId}\n`;
+  t += '\n';
+  if (p.mode === 'historico') t += `📊 *Prioridad: ${fmtNum(p.value)}* (excepción histórico de ${p.holder.name})\n`;
+  else if (p.mode === 'promedio') t += `📊 *Nº socio promedio: ${fmtNum(Math.round(p.value))}* (${p.count} computables)\n`;
+  t += `👥 Miembros: ${ms.length} · ✅ ${ms.filter(m => m.status === 'aceptada').length} aceptadas · ⏳ ${ms.filter(m => m.status !== 'aceptada').length} pendientes\n\n`;
+  ms2.forEach((m, i) => {
+    const flags = [m.role === 'capitan' ? '👑 Capitán' : (m.status === 'aceptada' ? '✅' : '⏳ pendiente'), m.category === 'menor' || isMinor(m) ? '👶 <16' : '', m.category === 'historico' ? '🏛️ histórico' : '', m.category === 'espera' ? '📜 lista espera' : '', m.pmr ? '♿ PMR' : ''].filter(Boolean).join(' · ');
+    t += `${i + 1}. ${m.name} — Nº ${m.socioNum ? fmtNum(Number(m.socioNum)) : '?'} — ${flags}`;
+    if (sens) t += `\n    ID: ${m.socioId || '—'} · PIN: ${m.pin || '—'}`;
+    t += '\n';
+  });
+  const pend = ms.filter(m => m.status !== 'aceptada' && m.role !== 'capitan');
+  if (pend.length) t += `\n⚠️ ${pend.map(m => m.name).join(', ')}: entrad con vuestro ID y PIN en la web del club y *ACEPTAD la invitación* del Capitán. ¡Sin aceptar no estáis en el grupo!\n`;
+  if (left > 0) t += `\n⏰ Cierre Fase 1: 30/10/2026 a las 12:00h (quedan ${d} días y ${h} h).`;
+  t += `\n🔗 https://www.valenciacf.com/fase-1-creaciondegrupos`;
+  return t;
+}
+$('#btnWhats').addEventListener('click', async () => {
+  if (!state.members.length) return toast('Añade miembros primero');
+  toast(await copyText(whatsappText()) ? '¡Resumen copiado! Pégalo en WhatsApp' : 'No se pudo copiar');
+});
+$('#btnCsv').addEventListener('click', () => {
+  if (!state.members.length) return toast('No hay miembros que exportar');
+  const p = calcPriority(state.members);
+  const head = ['Nombre', 'Rol', 'Estado', 'ID socio', 'PIN', 'Nº socio', 'Fecha nacimiento', 'Categoría prioridad', 'Computa en promedio', 'Valor computado', 'Tarifa edad', 'Asistencia 26-27', 'Accionista', 'Saldo Asiento Libre (€)', 'Renovación actual (€)', 'PMR'];
+  const catL = { general: 'General', menor: 'Menor de 16', historico: 'Histórico', espera: 'Lista espera 2007' };
+  const q = v => { const s = String(v ?? ''); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const rows = state.members.map(m => {
+    const r = p.rows.find(x => x.m.id === m.id);
+    return [m.name, m.role === 'capitan' ? 'Capitán' : 'Miembro', m.status === 'aceptada' ? 'Aceptada' : 'Pendiente', m.socioId, m.pin, m.socioNum, m.birth, catL[m.category] || '', r?.included ? 'Sí' : 'No', r?.value ?? '', DATA.ageLabel[m.ageTariff || 'adulto'], m.attendance === '0' ? 'No' : m.attendance + '%', m.shareholder ? 'Sí' : 'No', String(m.alBalance || 0).replace('.', ','), String(m.alRenewal || '').replace('.', ','), m.pmr ? 'Sí' : 'No'].map(q).join(';');
+  });
+  const summary = p.mode === 'none' ? '' : `\n\nResultado;${p.mode === 'historico' ? 'Excepción histórico' : 'Promedio'};${String(p.mode === 'historico' ? p.value : r2(p.value)).replace('.', ',')}`;
+  const csv = '﻿' + [head.join(';'), ...rows].join('\r\n') + summary + `\r\nAgrupación;${q(state.groupName)};ID grupo;${q(state.groupId)}`;
+  download(`agrupacion-nou-mestalla-${new Date().toISOString().slice(0, 10)}.csv`, csv, 'text/csv;charset=utf-8');
+  toast('CSV descargado (incluye ID y PIN: guárdalo con cuidado)');
+});
+$('#btnMore').addEventListener('click', e => { e.stopPropagation(); $('#moreMenu').classList.toggle('hidden'); });
+document.addEventListener('click', e => { if (!e.target.closest('#moreMenu')) $('#moreMenu').classList.add('hidden'); });
+$('#moreMenu').addEventListener('click', e => {
+  const a = e.target.closest('[data-act]')?.dataset.act; if (!a) return;
+  $('#moreMenu').classList.add('hidden');
+  if (a === 'json') download('agrupacion-nou-mestalla-backup.json', JSON.stringify({ groupName: state.groupName, groupId: state.groupId, logo: state.logo, members: state.members }, null, 2), 'application/json');
+  if (a === 'clear' && confirm('¿Borrar todos los miembros y datos guardados en este navegador?')) { state.members = []; state.groupName = ''; state.groupId = ''; state.logo = ''; save(); syncInputs(); renderAll(); resetForm(); toast('Datos borrados'); }
+  if (a === 'demo' && (!state.members.length || confirm('Esto sustituirá la lista actual por un ejemplo. ¿Continuar?'))) {
+    const mk = (o) => Object.assign({ id: String(Math.random()).slice(2), role: 'miembro', status: 'pendiente', socioId: '', pin: '', socioNum: '', birth: '', ageTariff: 'adulto', category: 'general', attendance: '0', shareholder: false, alBalance: 0, alRenewal: 0, pmr: false }, o);
+    state.groupName = 'Penya d\'Exemple'; state.groupId = '';
+    state.members = [
+      mk({ name: 'Vicent (capità)', role: 'capitan', status: 'aceptada', socioId: 'A1234567', pin: '1234', socioNum: 8450, birth: '1975-03-12', attendance: '100' }),
+      mk({ name: 'Amparo', status: 'aceptada', socioId: 'B7654321', pin: '5678', socioNum: 15320, birth: '1960-02-02', ageTariff: 'senior', shareholder: true }),
+      mk({ name: 'Pau', socioId: 'C1112223', pin: '9012', socioNum: 31200, birth: '2005-09-30', ageTariff: 'juvenil', attendance: '80', alBalance: 120 }),
+      mk({ name: 'Nerea', socioNum: 52000, birth: '2015-05-20', ageTariff: 'infantil', category: 'menor' }),
+      mk({ name: 'Toni (lista 2007)', socioNum: '', category: 'espera' })
+    ];
+    save(); syncInputs(); renderAll(); resetForm(); toast('Ejemplo cargado');
+  }
+});
+$('#importFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const d = JSON.parse(rd.result);
+      if (!Array.isArray(d.members)) throw 0;
+      state.members = d.members.map(m => ({ ...m, id: m.id || String(Math.random()).slice(2), name: String(m.name || 'Sin nombre') }));
+      state.groupName = d.groupName || ''; state.groupId = d.groupId || ''; state.logo = typeof d.logo === 'string' && d.logo.startsWith('data:image/') ? d.logo : '';
+      save(); syncInputs(); renderAll(); resetForm(); toast('Copia restaurada');
+    } catch { toast('Archivo no válido'); }
+    e.target.value = '';
+  };
+  rd.readAsText(f);
+});
+function syncInputs() { $('#gName').value = state.groupName || ''; $('#gId').value = state.groupId || ''; renderLogo(); }
+
+/* ---------- Escudo / imagen de la penya ---------- */
+function renderLogo() {
+  const has = !!state.logo;
+  const img = alt => `<img src="${state.logo}" alt="${esc(alt)}" class="w-full h-full object-contain">`;
+  const h = $('#logoHeader');
+  h.innerHTML = has ? img('Escudo de ' + (state.groupName || 'la agrupación')) : '🦇';
+  h.style.background = has ? '#ffffff' : 'linear-gradient(135deg,#FF6600,#C9A227)';
+  h.classList.toggle('p-1', has);
+  $('#logoForm').innerHTML = has ? img('Escudo') : '<i data-lucide="image-plus" class="w-5 h-5"></i>';
+  $('#logoForm').classList.toggle('bg-white', has);
+  $('#logoRemove').classList.toggle('hidden', !has);
+  icons();
+}
+/** Reduce la imagen a 320 px como máximo para que quepa en localStorage. */
+function resizeImage(file, max = 320) {
+  return new Promise((resolve, reject) => {
+    const rd = new FileReader();
+    rd.onerror = reject;
+    rd.onload = () => {
+      const im = new Image();
+      im.onerror = reject;
+      im.onload = () => {
+        const k = Math.min(1, max / Math.max(im.width, im.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+        let url = c.toDataURL('image/png');
+        if (url.length > 200000) url = c.toDataURL('image/webp', .85);
+        resolve(url);
+      };
+      im.src = rd.result;
+    };
+    rd.readAsDataURL(file);
+  });
+}
+$$('.logo-pick').forEach(b => b.addEventListener('click', () => $('#logoFile').click()));
+$('#logoFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  if (!f.type.startsWith('image/')) return toast('El archivo no es una imagen');
+  try { state.logo = await resizeImage(f); save(); renderLogo(); toast('Escudo actualizado'); }
+  catch { toast('No se pudo leer la imagen'); }
+});
+$('#logoRemove').addEventListener('click', () => { state.logo = ''; save(); renderLogo(); toast('Escudo eliminado'); });
+
+/* =====================================================================
+   PESTAÑA 2 · PLANO SVG (réplica del plano oficial)
+   Anillos superelípticos; sectores en sentido horario empezando
+   por el centro de la grada Oeste (arriba).
+   ===================================================================== */
+const CX = 500, CY = 450, SE = 3.2; // exponente de la superelipse
+const G = (w, label) => ({ gap: true, w, label });
+const seq = (a, b) => range(a, b).map(n => ({ n, w: 1 }));
+const RINGS = [
+  { key: 'baja', inner: [205, 146], outer: [275, 208], fs: 13,
+    slots: [G(3, 'Zona de banquillos / acceso a vestuarios (Oeste)'), ...seq(107, 124), G(3, 'Zona sin abono general (Este)'), ...seq(128, 141), ...seq(100, 103)] },
+  { key: 'media', inner: [286, 219], outer: [330, 262], fs: 13,
+    slots: [G(3, 'Sectores 203–212 · Hospitality (Oeste)'), ...seq(213, 232), G(3, 'Sectores 233–241 · Hospitality (Este)'), ...seq(242, 258), ...seq(200, 202)] },
+  { key: 'alta', inner: [350, 282], outer: [398, 329], fs: 12.5,
+    slots: [G(.5, 'Torre / bocana'), ...seq(305, 352), ...seq(300, 304)] },
+  { key: 'superior', inner: [404, 335], outer: [452, 381], fs: 12.5,
+    slots: [G(.5, 'Torre / bocana'), ...seq(405, 452), ...seq(400, 404)] }
+];
+function sePt(a, b, t) {
+  const c = Math.cos(t), s = Math.sin(t), e = 2 / SE;
+  return [CX + a * Math.sign(c) * Math.pow(Math.abs(c), e), CY + b * Math.sign(s) * Math.pow(Math.abs(s), e)];
+}
+// Tabla longitud de arco → parámetro t (t=-π/2 es arriba; crece en sentido horario)
+function arcTable(a, b) {
+  const N = 1440, ts = [], ls = [0]; let L = 0, prev = sePt(a, b, -Math.PI / 2);
+  for (let k = 0; k <= N; k++) {
+    const t = -Math.PI / 2 + 2 * Math.PI * k / N; ts.push(t);
+    if (k) { const p = sePt(a, b, t); L += Math.hypot(p[0] - prev[0], p[1] - prev[1]); ls.push(L); prev = p; }
+  }
+  return f => {
+    f = ((f % 1) + 1) % 1; const target = f * L;
+    let lo = 0, hi = N; while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (ls[mid] < target) lo = mid; else hi = mid; }
+    const span = ls[hi] - ls[lo] || 1; return ts[lo] + (ts[hi] - ts[lo]) * (target - ls[lo]) / span;
+  };
+}
+function sideOfFrac(f) {
+  f = ((f % 1) + 1) % 1;
+  if (f < .125 || f >= .875) return 'oeste';
+  if (f < .375) return 'norte';
+  if (f < .625) return 'este';
+  return 'sur';
+}
+const GEO = {}; // nº sector → { side }
+const priceColor = p => { // escala 300 → 1700
+  const k = Math.max(0, Math.min(1, (p - 300) / 1400));
+  const stops = [[60, 40, 30], [255, 102, 0], [230, 199, 102]];
+  const [a, b, kk] = k < .55 ? [stops[0], stops[1], k / .55] : [stops[1], stops[2], (k - .55) / .45];
+  return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * kk)).join(',')})`;
+};
+function sectorFill(n) {
+  const st = sectorStatus(n);
+  if (st === 'visitante') return 'url(#hatchVis)';
+  if (st === 'uefa') return 'url(#hatchUefa)';
+  if (st === 'na') return '#3a3a3a';
+  if (state.colorMode === 'precio') return priceColor(SECTOR_PRICE[n].price);
+  return DATA.gradas[gradaOf(n)].color;
+}
+
+function buildStadium() {
+  const svg = $('#stadium');
+  let h = `<defs>
+    <pattern id="hatchVis" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#4a4a4a"/><line x1="0" y1="0" x2="0" y2="8" stroke="#7a7a7a" stroke-width="3"/></pattern>
+    <pattern id="hatchUefa" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="8" height="8" fill="#3d3d3d"/><line x1="0" y1="0" x2="0" y2="8" stroke="#5c5c5c" stroke-width="2"/></pattern>
+    <linearGradient id="grass" x1="0" x2="1"><stop offset="0" stop-color="#1f6b35"/><stop offset="1" stop-color="#258041"/></linearGradient>
+  </defs>`;
+  // contorno exterior y anillo perimetral
+  const ring = (a, b, cls, extra = '') => { let d = ''; for (let k = 0; k <= 180; k++) { const p = sePt(a, b, 2 * Math.PI * k / 180); d += (k ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1); } return `<path d="${d}Z" class="${cls}" ${extra}/>`; };
+  h += ring(468, 397, '', 'fill="#141414" stroke="#2a2a2a" stroke-width="2"');
+  h += ring(196, 138, '', 'fill="#1b1b1b"');
+  // césped
+  h += `<rect x="${CX - 165}" y="${CY - 105}" width="330" height="210" rx="6" fill="url(#grass)"/>`;
+  for (let i = 0; i < 6; i++) h += `<rect x="${CX - 165 + i * 55}" y="${CY - 105}" width="27.5" height="210" fill="rgba(255,255,255,.035)"/>`;
+  h += `<g fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.6">
+      <rect x="${CX - 155}" y="${CY - 95}" width="310" height="190"/><line x1="${CX}" y1="${CY - 95}" x2="${CX}" y2="${CY + 95}"/>
+      <circle cx="${CX}" cy="${CY}" r="26"/><rect x="${CX - 155}" y="${CY - 50}" width="45" height="100"/><rect x="${CX + 110}" y="${CY - 50}" width="45" height="100"/>
+      <rect x="${CX - 155}" y="${CY - 24}" width="16" height="48"/><rect x="${CX + 139}" y="${CY - 24}" width="16" height="48"/></g>`;
+  h += `<text x="${CX}" y="${CY + 4}" text-anchor="middle" font-family="Bebas Neue, sans-serif" font-size="22" fill="rgba(255,255,255,.35)" letter-spacing="4">NOU MESTALLA</text>`;
+  // Grada Premium (Hospitality) entre Media y Alta
+  h += ring(340, 272, 'premium', 'fill="none" stroke="#C9A227" stroke-width="6" stroke-opacity=".75" style="cursor:help" data-premium="1"');
+
+  RINGS.forEach(R => {
+    const mid = [(R.inner[0] + R.outer[0]) / 2, (R.inner[1] + R.outer[1]) / 2];
+    const tOf = arcTable(mid[0], mid[1]);
+    const W = R.slots.reduce((s, x) => s + x.w, 0);
+    const anchor = R.slots[0].w / 2; // centro del primer hueco → arriba (eje Oeste)
+    const pad = 0.07 / W;
+    let cum = 0;
+    R.slots.forEach(sl => {
+      const f0 = (cum - anchor) / W, f1 = (cum + sl.w - anchor) / W; cum += sl.w;
+      const a0 = f0 + pad, a1 = f1 - pad, steps = Math.max(4, Math.ceil(sl.w * 6));
+      let d = '';
+      for (let i = 0; i <= steps; i++) { const t = tOf(a0 + (a1 - a0) * i / steps); const p = sePt(R.outer[0], R.outer[1], t); d += (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1); }
+      for (let i = steps; i >= 0; i--) { const t = tOf(a0 + (a1 - a0) * i / steps); const p = sePt(R.inner[0], R.inner[1], t); d += 'L' + p[0].toFixed(1) + ',' + p[1].toFixed(1); }
+      d += 'Z';
+      if (sl.gap) { h += `<path d="${d}" class="gap" data-gap="${esc(sl.label)}"><title>${esc(sl.label)}</title></path>`; return; }
+      const fm = (f0 + f1) / 2, c = sePt(mid[0], mid[1], tOf(fm));
+      GEO[sl.n] = { side: sideOfFrac(fm), ring: R.key };
+      const st = sectorStatus(sl.n), g = gradaOf(sl.n);
+      const light = st !== 'ok' || (state.colorMode === 'grada' && DATA.gradas[g].light);
+      h += `<path d="${d}" class="sec ${st !== 'ok' ? 'na' : ''}" data-s="${sl.n}" fill="${sectorFill(sl.n)}" tabindex="${st === 'ok' ? 0 : -1}" aria-label="Sector ${sl.n}"></path>`;
+      h += `<text x="${c[0].toFixed(1)}" y="${c[1].toFixed(1)}" class="lab ${light ? 'light' : ''}" data-l="${sl.n}" font-size="${R.fs}">${sl.n}</text>`;
+    });
+  });
+
+  // Puntos cardinales con calles
+  const lab = (x, y, rot, big, small) => `<g transform="translate(${x},${y}) rotate(${rot})" pointer-events="none">
+      <text text-anchor="middle" font-family="Bebas Neue, sans-serif" font-size="36" letter-spacing="6" fill="#d8d8d8">${big}</text>
+      <text y="20" text-anchor="middle" font-family="Inter, sans-serif" font-size="15" fill="#9a9a9a">${small}</text></g>`;
+  h += lab(CX, 26, 0, 'OESTE', 'Av. Corts Valencianes · Dama Ibérica · cota 0');
+  h += lab(CX, 866, 0, 'ESTE', 'Benicalap · C. Nicasio Benlloch · 🦇 · semisótano');
+  h += lab(972, CY, 90, 'NORTE', 'Palau de Congresos · Animación 116–119');
+  h += lab(28, CY, -90, 'SUR', 'Nuevo Centro · Visitantes 338–340 / 438–440');
+  svg.innerHTML = h;
+  applyMapState();
+}
+function recolor() {
+  $$('#stadium .sec').forEach(p => { const n = +p.dataset.s; p.setAttribute('fill', sectorFill(n)); });
+  $$('#stadium .lab').forEach(t => { const n = +t.dataset.l; const light = sectorStatus(n) !== 'ok' || (state.colorMode === 'grada' && DATA.gradas[gradaOf(n)].light); t.classList.toggle('light', light); });
+  renderLegend();
+}
+let highlightTier = null;
+function applyMapState() {
+  $$('#stadium .sec').forEach(p => {
+    const n = +p.dataset.s;
+    p.classList.toggle('sel', state.selected === n);
+    p.classList.toggle('dim', !!highlightTier && !highlightTier.sectors.includes(n));
+  });
+  $$('#stadium .lab').forEach(t => { t.style.opacity = highlightTier && !highlightTier.sectors.includes(+t.dataset.l) ? .25 : 1; });
+}
+function renderLegend() {
+  const items = state.colorMode === 'grada'
+    ? Object.values(DATA.gradas).map(g => `<span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background:${g.color}"></span>${g.name}</span>`)
+    : [300, 600, 900, 1100, 1400, 1700].map(p => `<span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background:${priceColor(p)}"></span>${eur0(p)}</span>`);
+  items.push('<span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background:#C9A227"></span>Premium / Hospitality</span>');
+  items.push('<span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background:repeating-linear-gradient(45deg,#4a4a4a 0 3px,#7a7a7a 3px 6px)"></span>Visitantes</span>');
+  items.push('<span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-[#3a3a3a]"></span>Sin abono general</span>');
+  $('#legend').innerHTML = items.join('');
+}
+
+/* ---------- Tooltip ---------- */
+function groupTotal(n) {
+  return state.members.reduce((s, m) => s + calcPrice(m, n).final, 0);
+}
+function tooltipHtml(n) {
+  const st = sectorStatus(n), g = DATA.gradas[gradaOf(n)], side = DATA.sides[GEO[n]?.side];
+  if (st === 'visitante') return `<b class="text-white">Sector ${n}</b><br><span class="text-gray-400">Afición visitante (LaLiga / Copa). No disponible para abonados.</span>`;
+  if (st === 'uefa') return `<b class="text-white">Sector ${n}</b><br><span class="text-gray-400">Ampliación de afición visitante en competición UEFA. No aparece en la tabla de abonos.</span>`;
+  const price = SECTOR_PRICE[n].price, pmr = DATA.pmrSectors.includes(n);
+  return `<div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-sm" style="background:${g.color}"></span><b class="text-white text-sm">Sector ${n}</b></div>
+    <div class="text-gray-400">${g.name} · ${side ? side.name : ''}</div>
+    <div class="font-display text-2xl text-vcf-orange leading-tight mt-0.5">${eur0(price)}</div>
+    ${pmr ? `<div class="text-sky-300">♿ Espacios PMR (fila 29): ${eur0(DATA.pmrPrice)}</div>` : ''}
+    ${state.members.length ? `<div class="mt-1 pt-1 border-t border-white/10 text-gray-300">Tu grupo (${state.members.length}): <b class="text-white">${eur(groupTotal(n))}</b></div>` : ''}
+    <div class="text-[10px] text-gray-500 mt-1">Pulsa para ver el desglose</div>`;
+}
+function showTip(html, clientX, clientY) {
+  const tip = $('#tooltip'), wrap = $('#mapWrap').getBoundingClientRect();
+  tip.innerHTML = html; tip.classList.remove('hidden');
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  let x = clientX - wrap.left + 14, y = clientY - wrap.top + 14;
+  if (x + tw > wrap.width) x = clientX - wrap.left - tw - 14;
+  if (x < 0) x = 4;
+  if (y + th > wrap.height) y = clientY - wrap.top - th - 14;
+  if (y < 0) y = 4;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+const hideTip = () => $('#tooltip').classList.add('hidden');
+function tipFor(target) {
+  if (target.dataset?.s) return tooltipHtml(+target.dataset.s);
+  if (target.dataset?.gap) return `<span class="text-gray-300">${esc(target.dataset.gap)}</span>`;
+  if (target.dataset?.premium) return `<b class="text-vcf-goldlight">Grada Premium</b><br><span class="text-gray-400">3 filas entre la Media y la Alta, reservadas a Hospitality (+6.500 localidades). Producto propio, fuera de la tabla de abonos.</span>`;
+  return null;
+}
+const svgEl = $('#stadium');
+svgEl.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse') return;
+  const html = tipFor(e.target); if (html) showTip(html, e.clientX, e.clientY); else hideTip();
+});
+svgEl.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+svgEl.addEventListener('click', e => {
+  const html = tipFor(e.target);
+  if (e.target.dataset?.s && sectorStatus(+e.target.dataset.s) === 'ok') { selectSector(+e.target.dataset.s, false); }
+  if (html) showTip(html, e.clientX, e.clientY); else hideTip();
+});
+svgEl.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset?.s) { e.preventDefault(); selectSector(+e.target.dataset.s, false); } });
+document.addEventListener('click', e => { if (!e.target.closest('#mapWrap')) hideTip(); });
+$('#mapScroll').addEventListener('scroll', hideTip);
+
+/* ---------- Zoom, color y plano oficial ---------- */
+function applyZoom() { $('#mapInner').style.width = (state.zoom * 100) + '%'; }
+$('#zoomIn').addEventListener('click', () => { state.zoom = Math.min(3, +(state.zoom + .5).toFixed(1)); applyZoom(); save(); });
+$('#zoomOut').addEventListener('click', () => { state.zoom = Math.max(1, +(state.zoom - .5).toFixed(1)); applyZoom(); save(); });
+$$('.colormode').forEach(b => b.addEventListener('click', () => {
+  state.colorMode = b.dataset.mode; save();
+  $$('.colormode').forEach(x => { const on = x.dataset.mode === state.colorMode; x.classList.toggle('bg-vcf-orange', on); x.classList.toggle('text-black', on); x.classList.toggle('font-semibold', on); x.classList.toggle('text-gray-300', !on); });
+  recolor();
+}));
+$('#toggleOfficial').addEventListener('click', () => { $('#officialWrap').classList.toggle('hidden'); });
+
+/* ---------- Selección, detalle y simulador ---------- */
+function selectSector(n, scroll = true) {
+  state.selected = n; save();
+  $('#sectorSelect').value = String(n);
+  applyMapState(); renderSector();
+  if (scroll && window.innerWidth < 1024) $('#sectorDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function fillSectorSelect() {
+  const opts = ['<option value="">— Selecciona un sector —</option>'];
+  ['baja', 'media', 'alta', 'superior'].forEach(k => {
+    const g = DATA.gradas[k];
+    const list = Object.keys(SECTOR_PRICE).map(Number).filter(n => Math.floor(n / 100) === { baja: 1, media: 2, alta: 3, superior: 4 }[k]).sort((a, b) => a - b);
+    opts.push(`<optgroup label="${g.name} (${g.range})">` + list.map(n => `<option value="${n}">Sector ${n} · ${eur0(SECTOR_PRICE[n].price)}${DATA.animacion.includes(n) ? ' · Animación' : ''}</option>`).join('') + '</optgroup>');
+  });
+  $('#sectorSelect').innerHTML = opts.join('');
+  $('#sectorSelect').addEventListener('change', e => { if (e.target.value) selectSector(+e.target.value); });
+}
+function renderSector() {
+  const n = state.selected, det = $('#sectorDetail'), sim = $('#simCard');
+  if (!n || !SECTOR_PRICE[n]) {
+    det.innerHTML = `<div class="text-center py-8 text-gray-400"><i data-lucide="mouse-pointer-click" class="w-10 h-10 mx-auto mb-3 text-vcf-orange"></i><p class="font-semibold text-gray-200">Elige un sector en el plano</p><p class="text-sm mt-1">Verás su grada, accesos, orientación y cuánto pagaría cada miembro.</p></div>`;
+    sim.innerHTML = `<h3 class="font-display text-2xl tracking-wide">Simulador de presupuesto del grupo</h3><p class="text-sm text-gray-400 mt-1">Selecciona un sector para calcular el precio de cada miembro con sus descuentos.</p>`;
+    icons(); return;
+  }
+  const gk = gradaOf(n), g = DATA.gradas[gk], side = DATA.sides[GEO[n]?.side], price = SECTOR_PRICE[n].price, pmr = DATA.pmrSectors.includes(n);
+  const tierMates = DATA.tiers.find(t => t.sectors.includes(n)).sectors.filter(s => s !== n);
+  det.innerHTML = `
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <p class="lbl" style="color:${g.color}">${g.name} · ${side.name}</p>
+        <h3 class="font-display text-5xl leading-none">Sector ${n}</h3>
+      </div>
+      <div class="text-right"><p class="lbl">Precio abono</p><div class="font-display text-4xl text-vcf-orange leading-none">${eur0(price)}</div></div>
+    </div>
+    <dl class="mt-4 space-y-3 text-sm">
+      <div class="flex gap-3"><i data-lucide="door-open" class="w-4 h-4 text-vcf-gold shrink-0 mt-0.5"></i><div><dt class="text-xs text-gray-500 font-semibold uppercase">Acceso</dt><dd class="text-gray-200">${g.access}</dd></div></div>
+      <div class="flex gap-3"><i data-lucide="eye" class="w-4 h-4 text-vcf-gold shrink-0 mt-0.5"></i><div><dt class="text-xs text-gray-500 font-semibold uppercase">Visibilidad</dt><dd class="text-gray-200">${g.view} Todo el estadio está bajo cubierta.</dd></div></div>
+      <div class="flex gap-3"><i data-lucide="compass" class="w-4 h-4 text-vcf-gold shrink-0 mt-0.5"></i><div><dt class="text-xs text-gray-500 font-semibold uppercase">Orientación · ${side.name}</dt><dd class="text-gray-200">${side.street}. ${side.info}${side.name === 'Oeste' && (gk === 'alta' || gk === 'superior') ? ' En la Alta y Superior Oeste está la zona de prensa.' : ''}</dd></div></div>
+      <div class="flex gap-3"><i data-lucide="info" class="w-4 h-4 text-vcf-gold shrink-0 mt-0.5"></i><div><dt class="text-xs text-gray-500 font-semibold uppercase">Notas</dt><dd class="text-gray-200">${g.notes}</dd></div></div>
+      ${pmr ? `<div class="rounded-lg border border-sky-500/30 bg-sky-500/10 p-2.5 text-sky-200 text-xs flex gap-2"><i data-lucide="accessibility" class="w-4 h-4 shrink-0"></i>Este sector tiene espacios PMR en la fila 29 (${eur0(DATA.pmrPrice)}), cada uno junto a un asiento para un acompañante.</div>` : ''}
+      <div><dt class="text-xs text-gray-500 font-semibold uppercase mb-1">Mismo precio (${eur0(price)})</dt><dd class="flex flex-wrap gap-1">${tierMates.map(s => `<button class="badge bg-white/5 hover:bg-vcf-orange hover:text-black border border-white/10" data-goto="${s}">${s}</button>`).join('')}</dd></div>
+    </dl>`;
+  det.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => selectSector(+b.dataset.goto, false)));
+
+  // Simulador
+  const ms = state.members;
+  if (!ms.length) {
+    sim.innerHTML = `<h3 class="font-display text-2xl tracking-wide">Simulador · Sector ${n}</h3><p class="text-sm text-gray-400 mt-1">Añade miembros en la pestaña <b>Agrupación</b> para calcular cuánto pagaría cada uno.</p>`;
+    icons(); return;
+  }
+  const res = ms.map(m => ({ m, c: calcPrice(m, n) }));
+  const total = res.reduce((s, r) => s + r.c.final, 0);
+  const pmrWarn = res.filter(r => r.c.pmrWarn);
+  sim.innerHTML = `
+    <div class="flex items-end justify-between gap-3 flex-wrap mb-3">
+      <div><p class="lbl">Simulador de presupuesto</p><h3 class="font-display text-3xl tracking-wide leading-none">Sector ${n} · ${g.name}</h3></div>
+      <div class="flex gap-4">
+        <div class="text-right"><p class="lbl">Total grupo</p><div class="font-display text-4xl text-vcf-orange leading-none">${eur(total)}</div></div>
+        <div class="text-right"><p class="lbl">Media / persona</p><div class="font-display text-4xl leading-none">${eur(total / ms.length)}</div></div>
+      </div>
+    </div>
+    ${pmrWarn.length ? `<div class="rounded-lg border border-red-500/30 bg-red-500/10 p-2.5 text-red-200 text-xs mb-3 flex gap-2"><i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>${pmrWarn.map(r => esc(r.m.name)).join(', ')} necesita${pmrWarn.length > 1 ? 'n' : ''} plaza PMR y este sector no tiene espacios PMR. Sectores con PMR: ${DATA.pmrSectors.join(', ')}.</div>` : ''}
+    <div class="scroll-x -mx-1">
+      <table class="simple w-full">
+        <thead><tr><th>Miembro</th><th class="!text-right">1 · Base</th><th class="!text-right">2 · Edad</th><th class="!text-right">3 · Mayor dto.</th><th class="!text-right">4 · Asiento Libre</th><th class="!text-right">Total</th></tr></thead>
+        <tbody>${res.map(({ m, c }) => `
+          <tr>
+            <td><div class="font-semibold">${esc(m.name)}</div><div class="text-[11px] text-gray-500">${c.pmrHere ? '♿ Plaza PMR' : ''}</div></td>
+            <td class="text-right">${eur(c.base)}</td>
+            <td class="text-right">${c.agePct ? `<span class="text-orange-300">−${c.agePct * 100}%</span><div class="text-[11px] text-gray-500">${DATA.ageLabel[c.ageKey]} → ${eur(c.afterAge)}</div>` : '<span class="text-gray-600">—</span>'}</td>
+            <td class="text-right">${c.bestPct ? `<span class="text-orange-300">−${c.bestPct * 100}%</span><div class="text-[11px] text-gray-500">${c.bestLabel} → ${eur(c.afterBest)}</div>` : '<span class="text-gray-600">—</span>'}</td>
+            <td class="text-right">${c.al ? `<span class="text-orange-300">−${eur(c.al)}</span><div class="text-[11px] text-gray-500">tope ${eur(c.cap)}${c.capFromRenewal ? '' : '*'}</div>` : '<span class="text-gray-600">—</span>'}</td>
+            <td class="text-right font-bold text-base text-white">${eur(c.final)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-[11px] text-gray-500 mt-3">Cascada aplicada: precio del sector → tarifa por edad → sobre ese subtotal, solo el mayor descuento entre asistencia 2026-27 (15%/10%) y accionista (5%) → resta del saldo de Asiento Libre (tope 50% del precio de renovación del asiento actual; * si no se indica, se usa el 50% del abono simulado). <b>Estimación orientativa</b>: el club no detalla cómo se combinan todos los descuentos; el importe final lo fija el Valencia CF.</p>`;
+  icons();
+}
+
+/* ---------- Tabla comparativa ---------- */
+function renderTiers() {
+  const order = ['baja', 'animacion', 'media', 'alta', 'superior'];
+  const tiers = [...DATA.tiers].sort((a, b) => b.price - a.price || order.indexOf(a.grada) - order.indexOf(b.grada));
+  const ms = state.members;
+  $('#tierTable').innerHTML = `<thead><tr><th>Grada</th><th>Sectores</th><th class="!text-right">Precio</th>${ms.length ? '<th class="!text-right">Tu grupo</th>' : ''}</tr></thead><tbody>` +
+    tiers.map((t, i) => {
+      const g = DATA.gradas[t.grada];
+      const tot = ms.length ? ms.reduce((s, m) => s + calcPrice(m, t.sectors[0]).final, 0) : 0;
+      return `<tr class="tier-row ${highlightTier === t ? 'active' : ''}" data-tier="${DATA.tiers.indexOf(t)}">
+        <td><span class="inline-flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-sm" style="background:${g.color}"></span>${g.name}</span></td>
+        <td class="!whitespace-normal text-gray-400 text-xs min-w-[220px]">${t.sectors.join(', ')}</td>
+        <td class="text-right font-display text-xl text-vcf-orange">${eur0(t.price)}</td>
+        ${ms.length ? `<td class="text-right font-semibold">${eur(tot)}</td>` : ''}
+      </tr>`;
+    }).join('') +
+    `<tr class="opacity-80"><td><span class="inline-flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-sm bg-sky-400"></span>PMR (fila 29 Baja)</span></td><td class="!whitespace-normal text-gray-400 text-xs">Espacios habilitados en sectores ${DATA.pmrSectors.join(', ')}</td><td class="text-right font-display text-xl text-vcf-orange">${eur0(DATA.pmrPrice)}</td>${ms.length ? '<td></td>' : ''}</tr></tbody>`;
+  $$('#tierTable .tier-row').forEach(r => r.addEventListener('click', () => {
+    const t = DATA.tiers[+r.dataset.tier];
+    highlightTier = highlightTier === t ? null : t;
+    renderTiers(); applyMapState();
+    if (highlightTier) $('#mapWrap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }));
+}
+
+/* =====================================================================
+   PESTAÑA 3 · HOJA DE RUTA Y FAQS
+   ===================================================================== */
+function renderRoadmap() {
+  const now = new Date();
+  const phases = [
+    { n: 1, title: 'Creación de grupos online', when: '14 – 30 octubre 2026', start: DATA.phase1Open, end: DATA.phase1Close, icon: 'laptop',
+      text: 'Del 14 oct (10:00h) al 30 oct (12:00h), plazo único e improrrogable. El Capitán crea la agrupación, recibe el ID de grupo, marca la casilla PMR si hace falta e invita a cada miembro con su ID y PIN. Cada miembro debe entrar con su cuenta y <b>aceptar</b>. Tras el cierre no se pueden añadir ni quitar miembros.' },
+    { n: 2, title: 'Selección de asiento presencial', when: '17 noviembre 2026 – mayo 2027', start: DATA.phase2Start, end: new Date('2027-05-31T23:59:59+02:00'), icon: 'armchair',
+      text: 'En la <b>Sala 1923 del Camp de Mestalla</b>. Solo acude el Capitán, en la fecha y hora de la cita (que depende del nº de socio promedio y llegará por email), y elige asientos contiguos para todo el grupo.' },
+    { n: 3, title: 'Formalización y pago', when: 'Junio – julio 2027', start: new Date('2027-06-01T00:00:00+02:00'), end: new Date('2027-07-31T23:59:59+02:00'), icon: 'credit-card',
+      text: 'Campaña de abonos: cada socio confirma administrativamente su asiento y paga el abono de la temporada inaugural 2027-28 en el Nou Mestalla, con los descuentos que le correspondan.' }
+  ];
+  $('#timeline').innerHTML = phases.map(p => {
+    const st = now > p.end ? 'done' : now >= p.start ? 'live' : 'next';
+    const badge = { done: '<span class="badge bg-white/10 text-gray-300">Finalizada</span>', live: '<span class="badge bg-vcf-orange text-black animate-pulse">En curso</span>', next: '<span class="badge bg-white/5 text-gray-400 border border-white/10">Próximamente</span>' }[st];
+    return `<li class="ml-7 relative">
+      <span class="absolute -left-[2.65rem] top-0 w-9 h-9 rounded-full flex items-center justify-center ring-4 ring-[#181818] ${st === 'live' ? 'bg-vcf-orange text-black' : st === 'done' ? 'bg-gray-600 text-white' : 'bg-[#222] text-vcf-gold border border-vcf-line'}"><i data-lucide="${p.icon}" class="w-4 h-4"></i></span>
+      <div class="flex items-center gap-2 flex-wrap"><span class="text-xs font-bold text-vcf-gold uppercase tracking-wider">Fase ${p.n}</span>${badge}</div>
+      <h3 class="font-display text-2xl tracking-wide leading-tight mt-0.5">${p.title}</h3>
+      <p class="text-sm font-semibold text-vcf-orange">${p.when}</p>
+      <p class="text-sm text-gray-300 mt-1.5 max-w-2xl">${p.text}</p>
+    </li>`;
+  }).join('');
+
+  const faqs = [
+    ['¿"Abonos a mi cargo" sirve para sentarnos juntos?', 'No. <b>"Abonos a mi cargo"</b> (Portal del Socio) solo vincula varios abonos a una misma cuenta o tarjeta para el cobro. <b>No</b> sienta a nadie junto ni crea un grupo. Para sentarse juntos en el Nou Mestalla es obligatorio crear un grupo en la herramienta online de la Fase 1, independientemente de quién pague cada abono.'],
+    ['¿Basta con que el Capitán nos invite?', 'No. Cada invitado aparece como <b>PENDIENTE</b> hasta que entra con <b>su propia cuenta</b> (ID + PIN) y pulsa <b>Aceptar</b>. Recibiréis un email y la invitación aparece en la pantalla principal. Sin aceptar no formas parte del grupo. Ojo: aceptar una invitación rechaza automáticamente las demás que tengas pendientes, y una vez aceptada no puedes salir por la web (solo vía Área Afición).'],
+    ['¿Qué diferencia hay entre ID de socio y número de socio?', 'El <b>ID</b> (junto con el PIN, los 4 últimos dígitos del DNI) sirve para entrar en la web. El <b>número de socio</b> es tu antigüedad y es el único criterio de prioridad: cuanto más bajo, antes es la cita.'],
+    ['¿Cómo se calcula la prioridad del grupo?', 'Se suman los números de socio de los miembros computables y se divide entre cuántos son. El resultado fija la fecha y hora de la cita de la Fase 2, pero <b>no</b> es el número de turno: el orden real se conoce tras el cierre, cuando el club procese todos los grupos.'],
+    ['¿Qué excepciones hay?', '<b>Menores de 16</b> (nacidos desde el 01/06/2011): no computan en la media (necesitan DNI registrado en el club). <b>Abonados históricos</b> (de alta ininterrumpida desde el 01/07/1976, socios 1–393): en grupos de hasta 5 personas se usa solo su número; si el grupo es mayor, se calcula como un grupo normal. <b>Antigua lista de espera 2007</b> (depósito de 100 €): computa como el socio nº 40.000; hay que contactar con Área Afición para activarlo.'],
+    ['¿Y si alguien usa silla de ruedas?', 'Al crear el grupo, el Capitán marca la casilla correspondiente para que el club asigne un espacio adaptado en la <b>fila 29 de la Grada Baja</b> (sectores 100, 110, 111, 112, 120, 121, 131, 132, 133, 140 y 141). Cada espacio PMR va junto a un asiento para un único acompañante. Precio PMR: 300 €.'],
+    ['¿Qué descuentos hay en el abono?', '<b>Tarifa por edad</b>: Infantil (nacidos desde el 01/06/2011) −50%, Juvenil (01/06/2002–31/05/2011) −10%, +65 (nacidos hasta el 31/05/1962) −10%. Además, <b>solo el mayor</b> de: asistencia al 100% de los partidos 2026-27 en Mestalla −15%, al 80% −10%, o accionista con ≥11 acciones (registradas antes del 30/04/2027) −5%. <b>Asiento Libre</b>: acumulas el 40% de cada entrada vendida en 2026-27, con tope del 50% del precio de renovación de tu asiento actual.'],
+    ['¿Quién va a elegir los asientos?', 'Solo el <b>Capitán</b> acude a la Sala 1923 de Mestalla en la Fase 2 y elige asientos contiguos para todo el grupo. El resto no tiene que ir.'],
+    ['¿Y si no formo grupo?', 'Los abonados que no formen grupo recibirán una cita individual tras el cierre. Si no creas el grupo en la Fase 1, no tendrás esa opción en fases posteriores. Un Socio VCF que no sea abonado debe crear un grupo él solo para recibir cita.']
+  ];
+  $('#faqs').innerHTML = faqs.map(([q, a], i) => `
+    <details class="py-3 group" ${i === 0 ? 'open' : ''}>
+      <summary class="flex items-center justify-between gap-3 font-semibold text-gray-100"><span>${q}</span><i data-lucide="chevron-down" class="chev w-5 h-5 text-vcf-orange shrink-0"></i></summary>
+      <div class="text-sm text-gray-300 mt-2 leading-relaxed">${a}</div>
+    </details>`).join('');
+
+  $('#links').innerHTML = DATA.links.map(l => `
+    <a href="${l.url}" target="_blank" rel="noopener" class="flex items-center gap-3 rounded-xl border border-vcf-line px-3 py-2.5 hover:border-vcf-orange hover:bg-vcf-orange/5 transition">
+      <i data-lucide="${l.icon}" class="w-4 h-4 text-vcf-orange"></i><span class="text-sm font-medium flex-1">${l.label}</span><i data-lucide="external-link" class="w-3.5 h-3.5 text-gray-500"></i></a>`).join('');
+}
+
+/* =====================================================================
+   CUENTA ATRÁS
+   ===================================================================== */
+function tick() {
+  const left = DATA.phase1Close - new Date();
+  const pad = n => String(n).padStart(2, '0');
+  if (left <= 0) {
+    $('#countdown').innerHTML = '<div class="cd-box px-3 py-2 font-display text-2xl text-vcf-orange">FASE 1 CERRADA</div>';
+    $('#cdLabel').textContent = 'Próximo: Fase 2 desde el 17 nov 2026';
+    clearInterval(timer); return;
+  }
+  $('#cdD').textContent = Math.floor(left / 864e5);
+  $('#cdH').textContent = pad(Math.floor(left / 36e5) % 24);
+  $('#cdM').textContent = pad(Math.floor(left / 6e4) % 60);
+  $('#cdS').textContent = pad(Math.floor(left / 1e3) % 60);
+}
+
+/* =====================================================================
+   NAVEGACIÓN Y ARRANQUE
+   ===================================================================== */
+function setTab(tab) {
+  $$('.tab-panel').forEach(p => p.classList.toggle('hidden', p.id !== 'tab-' + tab));
+  $$('.tab-btn').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
+  try { localStorage.setItem('nouMestalla_tab', tab); } catch {}
+  hideTip();
+  window.scrollTo({ top: 0 });
+}
+$$('.tab-btn').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+function renderAll() { renderGroup(); renderTiers(); renderSector(); }
+
+syncInputs();
+fillSectorSelect();
+buildStadium();
+renderLegend();
+applyZoom();
+$$('.colormode').forEach(x => { const on = x.dataset.mode === state.colorMode; x.classList.toggle('bg-vcf-orange', on); x.classList.toggle('text-black', on); x.classList.toggle('font-semibold', on); x.classList.toggle('text-gray-300', !on); });
+if (state.selected) $('#sectorSelect').value = String(state.selected);
+applyMapState();
+renderRoadmap();
+renderAll();
+resetForm();
+let tab = 'grupo'; try { tab = localStorage.getItem('nouMestalla_tab') || 'grupo'; } catch {}
+setTab(['grupo', 'mapa', 'ruta'].includes(tab) ? tab : 'grupo');
+var timer = setInterval(tick, 1000); tick();
+icons();
+</script>
+</body>
+</html>
