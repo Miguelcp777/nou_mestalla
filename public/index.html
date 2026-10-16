@@ -298,7 +298,11 @@
         <span class="text-sm"><span class="font-semibold flex items-center gap-1.5"><i data-lucide="accessibility" class="w-4 h-4 text-sky-400"></i>Necesita plaza PMR en silla de ruedas</span><span class="block text-[11px] text-gray-400">Fila 29 de la Grada Baja. El capitán marca la casilla al crear el grupo.</span></span>
       </label>
 
-      <button type="submit" id="formSubmit" class="btn btn-primary w-full"><i data-lucide="plus" class="w-4 h-4"></i>Añadir al grupo</button>
+      <div class="grid sm:grid-cols-2 gap-2">
+        <button type="submit" id="formSubmit" class="btn btn-primary w-full"><i data-lucide="plus" class="w-4 h-4"></i>Añadir al grupo</button>
+        <button type="submit" id="formSend" class="btn btn-primary w-full !bg-vcf-gold hover:!bg-vcf-goldlight"><i data-lucide="send" class="w-4 h-4"></i>Añadir y enviar al capitán</button>
+      </div>
+      <p class="text-[11px] text-gray-500 -mt-1"><b class="text-gray-300">Añadir al grupo</b> lo guarda solo en este móvil (para tu lista, el promedio y el simulador). <b class="text-vcf-goldlight">Enviar al capitán</b> además se lo manda cifrado al capitán para el registro.</p>
     </form>
 
     <!-- Lista -->
@@ -737,6 +741,7 @@ function resetForm() {
   F('fSocioId').type = 'password'; F('fPin').type = 'password';
   $('#formTitle').innerHTML = '<i data-lucide="user-plus" class="w-5 h-5 text-vcf-orange"></i>Añadir miembro';
   $('#formSubmit').innerHTML = '<i data-lucide="plus" class="w-4 h-4"></i>Añadir al grupo';
+  $('#formSend').innerHTML = '<i data-lucide="send" class="w-4 h-4"></i>Añadir y enviar al capitán';
   $('#formCancel').classList.add('hidden');
   if (!state.members.some(m => m.role === 'capitan')) F('fRole').value = 'capitan', F('fStatus').value = 'aceptada';
   updateAgeHint(); icons();
@@ -749,6 +754,7 @@ function fillForm(m) {
   F('fAlRen').value = m.alRenewal || ''; F('fPmr').checked = !!m.pmr;
   $('#formTitle').innerHTML = '<i data-lucide="pencil" class="w-5 h-5 text-vcf-orange"></i>Editar miembro';
   $('#formSubmit').innerHTML = '<i data-lucide="save" class="w-4 h-4"></i>Guardar cambios';
+  $('#formSend').innerHTML = '<i data-lucide="send" class="w-4 h-4"></i>Guardar y enviar al capitán';
   $('#formCancel').classList.remove('hidden');
   updateAgeHint(); icons();
   $('#memberForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -796,7 +802,8 @@ $('#memberForm').addEventListener('submit', e => {
     state.members[idx] = m;
   } else state.members.push(m);
   save(); renderAll(); resetForm();
-  toast(idx >= 0 ? 'Miembro actualizado' : `${name} añadido al grupo`);
+  if (e.submitter?.id === 'formSend') openSendModal([id]);
+  else toast(idx >= 0 ? 'Miembro actualizado' : `${name} añadido al grupo`);
 });
 
 $('#memberList').addEventListener('click', e => {
@@ -1369,7 +1376,7 @@ async function withdrawMember(m) {
   try { await api('withdraw', { id: m.sentId, token: m.sentToken }); toast('Datos retirados del servidor'); }
   catch (e) { toast('No se pudieron retirar: ' + e.message); }
 }
-async function openSendModal() {
+async function openSendModal(only) {
   if (!state.members.length) return toast('Añade primero tus datos en el formulario');
   const body = $('#sendBody');
   $('#sendModal').classList.remove('hidden'); document.body.style.overflow = 'hidden';
@@ -1378,7 +1385,7 @@ async function openSendModal() {
   try { cfg = await api('config'); }
   catch { body.innerHTML = '<p class="text-sm text-red-300">No se pudo conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.</p>'; return; }
   if (!cfg.configured) { body.innerHTML = '<p class="text-sm text-amber-200">El capitán aún no ha activado la recepción de datos. Inténtalo más tarde.</p>'; return; }
-  const pending = m => !m.sentId || m.dirty;
+  const pending = m => Array.isArray(only) ? only.includes(m.id) : (!m.sentId || m.dirty);
   body.innerHTML = `
     <div>
       <p class="lbl">¿Qué miembros envías?</p>
