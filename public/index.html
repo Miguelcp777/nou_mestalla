@@ -169,7 +169,6 @@
         <input id="gId" class="field" placeholder="Opcional" maxlength="40">
       </div>
       <div class="sm:col-span-2 flex flex-wrap gap-2 lg:justify-end">
-        <button id="btnSend" class="btn btn-primary !bg-vcf-gold hover:!bg-vcf-goldlight"><i data-lucide="send" class="w-4 h-4"></i>Enviar al capitán</button>
         <button id="btnWhats" class="btn btn-primary"><i data-lucide="message-circle" class="w-4 h-4"></i>Copiar resumen WhatsApp</button>
         <button id="btnCsv" class="btn btn-ghost"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i>Exportar Excel/CSV</button>
         <div class="relative">
@@ -186,12 +185,13 @@
     <label class="mt-3 inline-flex items-center gap-2 text-xs text-gray-400 cursor-pointer"><input id="waSensitive" type="checkbox" class="accent-orange-500"> Incluir ID y PIN en el resumen de WhatsApp (no recomendado en grupos grandes)</label>
   </div>
 
-  <div class="grid gap-5 lg:grid-cols-5">
-    <!-- Formulario -->
-    <form id="memberForm" class="card p-4 sm:p-5 lg:col-span-2 space-y-4" autocomplete="off" novalidate>
-      <div class="flex items-center justify-between">
+  <div>
+    <!-- Formulario (ventana emergente) -->
+    <div id="memberModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="formTitle">
+    <form id="memberForm" class="card w-full sm:max-w-xl max-h-[92vh] overflow-y-auto p-4 sm:p-5 space-y-4 rounded-b-none sm:rounded-2xl" autocomplete="off" novalidate>
+      <div class="flex items-center justify-between gap-3 sticky -top-4 sm:-top-5 -mx-4 sm:-mx-5 -mt-4 sm:-mt-5 px-4 sm:px-5 py-3 bg-[#181818] border-b border-vcf-line z-10">
         <h2 id="formTitle" class="font-display text-2xl tracking-wide flex items-center gap-2"><i data-lucide="user-plus" class="w-5 h-5 text-vcf-orange"></i>Añadir miembro</h2>
-        <button type="button" id="formCancel" class="hidden text-xs text-gray-400 hover:text-white">Cancelar edición</button>
+        <button type="button" id="formCancel" class="btn-icon" aria-label="Cerrar"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
       <input type="hidden" id="fId">
 
@@ -304,12 +304,16 @@
       </div>
       <p class="text-[11px] text-gray-500 -mt-1"><b class="text-gray-300">Añadir al grupo</b> lo guarda solo en este móvil (para tu lista, el promedio y el simulador). <b class="text-vcf-goldlight">Enviar al capitán</b> además se lo manda cifrado al capitán para el registro.</p>
     </form>
+    </div>
 
     <!-- Lista -->
-    <div class="lg:col-span-3 space-y-3">
-      <div class="flex items-center justify-between gap-2">
+    <div class="space-y-3">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
         <h2 class="font-display text-2xl tracking-wide">Miembros</h2>
+        <div class="flex gap-2">
+        <button id="btnAddMember" class="btn btn-primary !py-1.5 text-sm" data-add><i data-lucide="user-plus" class="w-4 h-4"></i>Añadir miembro</button>
         <button id="eyeAll" class="btn btn-ghost !py-1.5 text-xs" aria-pressed="false"><i data-lucide="eye-off" class="w-4 h-4"></i><span>Mostrar ID/PIN</span></button>
+        </div>
       </div>
       <div id="memberList" class="space-y-3"></div>
     </div>
@@ -730,7 +734,7 @@ function renderGroup() {
         </div>
       </div>
     </article>`;
-  }).join('') : `<div class="card p-8 text-center text-gray-400"><i data-lucide="users" class="w-10 h-10 mx-auto mb-2 text-gray-600"></i><p class="font-semibold text-gray-200">Aún no hay miembros</p><p class="text-sm mt-1">Empieza por el Capitán con el formulario.</p></div>`;
+  }).join('') : `<div class="card p-8 text-center text-gray-400"><i data-lucide="users" class="w-10 h-10 mx-auto mb-2 text-gray-600"></i><p class="font-semibold text-gray-200">Aún no hay miembros</p><p class="text-sm mt-1">Empieza por el Capitán.</p><button class="btn btn-primary mt-4" data-add><i data-lucide="user-plus" class="w-4 h-4"></i>Añadir miembro</button></div>`;
   icons();
 }
 
@@ -742,7 +746,6 @@ function resetForm() {
   $('#formTitle').innerHTML = '<i data-lucide="user-plus" class="w-5 h-5 text-vcf-orange"></i>Añadir miembro';
   $('#formSubmit').innerHTML = '<i data-lucide="plus" class="w-4 h-4"></i>Añadir al grupo';
   $('#formSend').innerHTML = '<i data-lucide="send" class="w-4 h-4"></i>Añadir y enviar al capitán';
-  $('#formCancel').classList.add('hidden');
   if (!state.members.some(m => m.role === 'capitan')) F('fRole').value = 'capitan', F('fStatus').value = 'aceptada';
   updateAgeHint(); icons();
 }
@@ -755,10 +758,18 @@ function fillForm(m) {
   $('#formTitle').innerHTML = '<i data-lucide="pencil" class="w-5 h-5 text-vcf-orange"></i>Editar miembro';
   $('#formSubmit').innerHTML = '<i data-lucide="save" class="w-4 h-4"></i>Guardar cambios';
   $('#formSend').innerHTML = '<i data-lucide="send" class="w-4 h-4"></i>Guardar y enviar al capitán';
-  $('#formCancel').classList.remove('hidden');
   updateAgeHint(); icons();
-  $('#memberForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+function openMemberModal(m) {
+  if (m) fillForm(m); else resetForm();
+  $('#memberModal').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+  $('#memberForm').scrollTop = 0;
+  setTimeout(() => F('fName').focus(), 50);
+}
+function closeMemberModal() { $('#memberModal').classList.add('hidden'); document.body.style.overflow = ''; resetForm(); }
+document.addEventListener('click', e => { if (e.target.closest('[data-add]')) openMemberModal(); });
+$('#memberModal').addEventListener('click', e => { if (e.target.id === 'memberModal') closeMemberModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#memberModal').classList.contains('hidden')) closeMemberModal(); });
 function updateAgeHint() {
   const b = F('fBirth').value, hint = $('#ageHint');
   if (!b) { hint.textContent = 'Con la fecha de nacimiento se calcula automáticamente la tarifa y si es menor de 16.'; hint.className = 'text-[11px] text-gray-500 -mt-2'; return; }
@@ -775,7 +786,7 @@ F('fBirth').addEventListener('change', () => {
 });
 F('fPin').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4); });
 $$('.pw-toggle').forEach(b => b.addEventListener('click', () => { const i = F(b.dataset.target); i.type = i.type === 'password' ? 'text' : 'password'; }));
-$('#formCancel').addEventListener('click', resetForm);
+$('#formCancel').addEventListener('click', closeMemberModal);
 
 $('#memberForm').addEventListener('submit', e => {
   e.preventDefault();
@@ -801,14 +812,14 @@ $('#memberForm').addEventListener('submit', e => {
     if (prev.sentId) Object.assign(m, { sentId: prev.sentId, sentToken: prev.sentToken, sentAt: prev.sentAt, dirty: true });
     state.members[idx] = m;
   } else state.members.push(m);
-  save(); renderAll(); resetForm();
+  save(); renderAll(); closeMemberModal();
   if (e.submitter?.id === 'formSend') openSendModal([id]);
   else toast(idx >= 0 ? 'Miembro actualizado' : `${name} añadido al grupo`);
 });
 
 $('#memberList').addEventListener('click', e => {
   const ed = e.target.closest('[data-edit]'), del = e.target.closest('[data-del]'), st = e.target.closest('[data-toggle-status]');
-  if (ed) fillForm(state.members.find(m => m.id === ed.dataset.edit));
+  if (ed) openMemberModal(state.members.find(m => m.id === ed.dataset.edit));
   if (del) {
     const m = state.members.find(x => x.id === del.dataset.del);
     if (confirm(`¿Eliminar a ${m.name} del grupo?`)) {
@@ -1377,7 +1388,7 @@ async function withdrawMember(m) {
   catch (e) { toast('No se pudieron retirar: ' + e.message); }
 }
 async function openSendModal(only) {
-  if (!state.members.length) return toast('Añade primero tus datos en el formulario');
+  if (!state.members.length) return toast('Añade primero tus datos con «Añadir miembro»');
   const body = $('#sendBody');
   $('#sendModal').classList.remove('hidden'); document.body.style.overflow = 'hidden';
   body.innerHTML = '<p class="text-sm text-gray-400 flex items-center gap-2"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>Conectando…</p>'; icons();
@@ -1443,7 +1454,6 @@ async function openSendModal(only) {
   });
 }
 function closeSendModal() { $('#sendModal').classList.add('hidden'); document.body.style.overflow = ''; }
-$('#btnSend').addEventListener('click', openSendModal);
 $('#sendClose').addEventListener('click', closeSendModal);
 $('#sendModal').addEventListener('click', e => { if (e.target.id === 'sendModal') closeSendModal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sendModal').classList.contains('hidden')) closeSendModal(); });
