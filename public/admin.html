@@ -49,7 +49,7 @@
       </div>
     </a>
     <div class="flex gap-2">
-      <a href="./" class="btn btn-ghost !px-3" title="Volver a la app"><i data-lucide="arrow-left" class="w-4 h-4"></i><span class="hidden sm:inline">Volver</span></a>
+      <a href="./" class="btn btn-ghost !px-3" title="Ir a la app (en modo capitán si has entrado)"><i data-lucide="arrow-left" class="w-4 h-4"></i><span class="hidden sm:inline">Ir a la app</span></a>
       <button id="btnLogout" class="btn btn-ghost !px-3 hidden"><i data-lucide="log-out" class="w-4 h-4"></i><span class="hidden sm:inline">Salir</span></button>
     </div>
   </div>
@@ -183,7 +183,9 @@ async function kek(password, saltB64, iter) {
 let cfg = null, session = null, rows = [], showSensitive = false, idleT;
 function resetIdle() { clearTimeout(idleT); if (session) idleT = setTimeout(() => { logout(); toast('Sesión bloqueada por inactividad'); }, 15 * 60e3); }
 ['click', 'keydown', 'touchstart', 'scroll'].forEach(ev => addEventListener(ev, resetIdle, { passive: true }));
-function logout() { session = null; rows = []; $('#table').innerHTML = ''; $('#lPass').value = ''; show('loginView'); }
+const ADMIN_KEY = 'nouMestalla_admin'; // activa el «modo capitán» en la app de este navegador
+const setAdminMode = on => { try { on ? localStorage.setItem(ADMIN_KEY, String(Date.now() + 12 * 3600e3)) : localStorage.removeItem(ADMIN_KEY); } catch {} };
+function logout() { setAdminMode(false); session = null; rows = []; $('#table').innerHTML = ''; $('#lPass').value = ''; show('loginView'); }
 $('#btnLogout').addEventListener('click', logout);
 
 /* ---------- Arranque ---------- */
@@ -244,6 +246,7 @@ async function load(password) {
     priv = await crypto.subtle.importKey('pkcs8', pkcs8, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['decrypt']);
   }
   session = { token: tok, priv };
+  setAdminMode(true);
   rows = await Promise.all(res.records.map(r => decryptRecord(priv, r)));
   rows.sort((a, b) => (a.data?.role === 'capitan' ? -1 : 0) - (b.data?.role === 'capitan' ? -1 : 0) || String(a.data?.name).localeCompare(String(b.data?.name), 'es'));
   render(); resetIdle();

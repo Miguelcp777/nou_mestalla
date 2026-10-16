@@ -149,8 +149,12 @@
     </div>
   </div>
 
-  <!-- Datos del grupo + acciones -->
-  <div class="card p-4 sm:p-5">
+  <!-- Datos del grupo + acciones (solo en modo capitán) -->
+  <div id="adminCard" class="hidden card p-4 sm:p-5 ring-1 ring-vcf-gold/40">
+    <div class="flex items-center justify-between gap-2 mb-3 -mt-1">
+      <span class="badge bg-vcf-gold/20 text-vcf-goldlight"><i data-lucide="shield-check" class="w-3 h-3"></i>Modo capitán</span>
+      <button type="button" id="adminExit" class="text-xs text-gray-400 hover:text-white underline">Salir del modo capitán</button>
+    </div>
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 items-end">
       <div>
         <label class="lbl" for="gName">Nombre de la agrupación</label>
@@ -1471,6 +1475,11 @@ if (state.selected) $('#sectorSelect').value = String(state.selected);
 applyMapState();
 renderRoadmap();
 renderAll();
+// Modo capitán: se activa al entrar en /admin con la contraseña (caduca a las 12 h)
+const ADMIN_KEY = 'nouMestalla_admin';
+const isAdminMode = () => { try { return Number(localStorage.getItem(ADMIN_KEY)) > Date.now(); } catch { return false; } };
+$('#adminCard').classList.toggle('hidden', !isAdminMode());
+$('#adminExit').addEventListener('click', () => { try { localStorage.removeItem(ADMIN_KEY); } catch {} $('#adminCard').classList.add('hidden'); toast('Has salido del modo capitán'); });
 resetForm();
 setTab('mapa'); // siempre se abre en el plano de precios
 var timer = setInterval(tick, 1000); tick();
