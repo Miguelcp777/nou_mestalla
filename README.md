@@ -9,3 +9,15 @@ Herramienta **no oficial** para organizar una agrupación de socios del Valencia
 
 Es un único `index.html` estático (Tailwind CDN + Lucide + Vanilla JS). Los datos se guardan solo en el
 navegador de cada usuario (localStorage). Fuente de los datos: valenciacf.com (octubre 2026).
+
+## Base de datos cifrada (envío al capitán)
+
+- Los socios pulsan **«Enviar al capitán»**: sus datos se cifran en el navegador (AES-256-GCM + RSA-OAEP-3072 con la
+  clave pública del capitán) y se guardan en Netlify Blobs mediante la función `netlify/functions/api.mjs`.
+- El capitán entra en **`/admin.html`** con su contraseña: la clave privada (cifrada con PBKDF2-SHA256 600k + AES-GCM)
+  se descifra solo en su navegador. El servidor nunca ve datos en claro ni la contraseña.
+- La activación inicial requiere la variable de entorno `SETUP_TOKEN` (configurada en Netlify).
+- Para enviar datos hace falta el **código de la penya**; hay límite de intentos por IP.
+
+Estructura: `public/` (web estática), `netlify/functions/` (API), `netlify.toml`.
+Desarrollo local: `npm install` y `netlify dev`.

@@ -167,6 +167,7 @@
         <input id="gId" class="field" placeholder="Opcional" maxlength="40">
       </div>
       <div class="sm:col-span-2 flex flex-wrap gap-2 lg:justify-end">
+        <button id="btnSend" class="btn btn-primary !bg-vcf-gold hover:!bg-vcf-goldlight"><i data-lucide="send" class="w-4 h-4"></i>Enviar al capitán</button>
         <button id="btnWhats" class="btn btn-primary"><i data-lucide="message-circle" class="w-4 h-4"></i>Copiar resumen WhatsApp</button>
         <button id="btnCsv" class="btn btn-ghost"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i>Exportar Excel/CSV</button>
         <div class="relative">
@@ -403,7 +404,7 @@
       </div>
     </div>
   </div>
-  <p class="text-[11px] text-gray-500 text-center px-4">Herramienta <b>no oficial</b> creada por y para socios. No está vinculada al Valencia CF. Los datos se guardan únicamente en este navegador. La información oficial del club siempre prevalece.</p>
+  <p class="text-[11px] text-gray-500 text-center px-4">Herramienta <b>no oficial</b> creada por y para socios. No está vinculada al Valencia CF. Los datos se guardan en este navegador; solo salen de él si pulsas «Enviar al capitán», y van cifrados de forma que únicamente el capitán puede leerlos. La información oficial del club siempre prevalece.<br><a href="admin.html" class="inline-flex items-center gap-1 mt-2 text-gray-400 hover:text-vcf-orange"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i>Acceso del capitán</a></p>
 </section>
 </main>
 
@@ -415,6 +416,18 @@
     <button class="tab-btn flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold text-gray-400" data-tab="ruta" role="tab"><i data-lucide="route" class="w-5 h-5"></i>Hoja de ruta</button>
   </div>
 </nav>
+
+<!-- Modal: enviar al capitán -->
+<div id="sendModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="sendTitle">
+  <div class="card w-full sm:max-w-lg max-h-[92vh] overflow-y-auto p-5 rounded-b-none sm:rounded-2xl">
+    <div class="flex items-start justify-between gap-3">
+      <h2 id="sendTitle" class="font-display text-3xl tracking-wide flex items-center gap-2"><i data-lucide="send" class="w-6 h-6 text-vcf-gold"></i>Enviar al capitán</h2>
+      <button type="button" id="sendClose" class="btn-icon" aria-label="Cerrar"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    <p class="text-sm text-gray-300 mt-2">Tus datos se <b>cifran en este móvil</b> antes de salir. Solo el capitán, con su contraseña, puede leerlos; ni el servidor ni nadie más.</p>
+    <div id="sendBody" class="mt-4 space-y-4"></div>
+  </div>
+</div>
 
 <div id="toast" class="toast fixed left-1/2 -translate-x-1/2 bottom-24 md:bottom-8 z-50 opacity-0 pointer-events-none translate-y-2 bg-white text-black text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl"></div>
 
@@ -688,6 +701,7 @@ function renderGroup() {
               (m.status === 'aceptada' ? '<span class="badge bg-emerald-500/15 text-emerald-300"><i data-lucide="check" class="w-3 h-3"></i>Aceptada</span>' : '<span class="badge bg-amber-500/15 text-amber-300"><i data-lucide="clock" class="w-3 h-3"></i>Pendiente</span>')}
             ${catBadge[m.category] || ''}
             ${m.pmr ? '<span class="badge bg-sky-500/15 text-sky-300"><i data-lucide="accessibility" class="w-3 h-3"></i>PMR</span>' : ''}
+            ${m.sentId ? (m.dirty ? '<span class="badge bg-amber-500/15 text-amber-300"><i data-lucide="refresh-cw" class="w-3 h-3"></i>Cambios sin enviar</span>' : `<span class="badge bg-vcf-gold/15 text-vcf-goldlight"><i data-lucide="send" class="w-3 h-3"></i>Enviado ${new Date(m.sentAt).toLocaleDateString('es-ES')}</span>`) : ''}
           </div>
           <div class="grid grid-cols-3 gap-3 mt-3 text-xs">
             <div><div class="text-gray-500 uppercase text-[10px] font-semibold">Nº socio</div><div class="font-display text-xl leading-tight">${m.socioNum ? fmtNum(Number(m.socioNum)) : '—'}</div></div>
@@ -767,7 +781,11 @@ $('#memberForm').addEventListener('submit', e => {
   };
   if (role === 'capitan') state.members.forEach(x => { if (x.id !== id && x.role === 'capitan') x.role = 'miembro'; });
   const idx = state.members.findIndex(x => x.id === id);
-  if (idx >= 0) state.members[idx] = m; else state.members.push(m);
+  if (idx >= 0) {
+    const prev = state.members[idx];
+    if (prev.sentId) Object.assign(m, { sentId: prev.sentId, sentToken: prev.sentToken, sentAt: prev.sentAt, dirty: true });
+    state.members[idx] = m;
+  } else state.members.push(m);
   save(); renderAll(); resetForm();
   toast(idx >= 0 ? 'Miembro actualizado' : `${name} añadido al grupo`);
 });
@@ -777,7 +795,10 @@ $('#memberList').addEventListener('click', e => {
   if (ed) fillForm(state.members.find(m => m.id === ed.dataset.edit));
   if (del) {
     const m = state.members.find(x => x.id === del.dataset.del);
-    if (confirm(`¿Eliminar a ${m.name} del grupo?`)) { state.members = state.members.filter(x => x.id !== m.id); save(); renderAll(); }
+    if (confirm(`¿Eliminar a ${m.name} del grupo?`)) {
+      if (m.sentId && confirm(`${m.name} ya se envió al capitán. ¿Retirar también esos datos del servidor?`)) withdrawMember(m);
+      state.members = state.members.filter(x => x.id !== m.id); save(); renderAll();
+    }
   }
   if (st) { const m = state.members.find(x => x.id === st.dataset.toggleStatus); m.status = m.status === 'aceptada' ? 'pendiente' : 'aceptada'; save(); renderAll(); }
 });
@@ -1289,6 +1310,104 @@ function setTab(tab) {
   window.scrollTo({ top: 0 });
 }
 $$('.tab-btn').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+/* =====================================================================
+   ENVÍO CIFRADO AL CAPITÁN
+   Cifrado híbrido en el navegador: AES-256-GCM para los datos y
+   RSA-OAEP-SHA256 (clave pública del capitán) para la clave AES.
+   ===================================================================== */
+const b64 = buf => { let s = ''; new Uint8Array(buf).forEach(b => { s += String.fromCharCode(b); }); return btoa(s); };
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function encryptForCaptain(publicKeyB64, obj) {
+  const pub = await crypto.subtle.importKey('spki', unb64(publicKeyB64), { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt']);
+  const aes = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, aes, new TextEncoder().encode(JSON.stringify(obj)));
+  const wk = await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, pub, await crypto.subtle.exportKey('raw', aes));
+  return { wk: b64(wk), iv: b64(iv), ct: b64(ct) };
+}
+async function api(path, body) {
+  const r = await fetch('/api/' + path, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : { cache: 'no-store' });
+  let d = {}; try { d = await r.json(); } catch {}
+  if (!r.ok) throw new Error(d.error || `Error ${r.status}`);
+  return d;
+}
+const SEND_FIELDS = ['name', 'role', 'status', 'socioId', 'pin', 'socioNum', 'birth', 'ageTariff', 'category', 'attendance', 'shareholder', 'alBalance', 'alRenewal', 'pmr'];
+async function withdrawMember(m) {
+  try { await api('withdraw', { id: m.sentId, token: m.sentToken }); toast('Datos retirados del servidor'); }
+  catch (e) { toast('No se pudieron retirar: ' + e.message); }
+}
+async function openSendModal() {
+  if (!state.members.length) return toast('Añade primero tus datos en el formulario');
+  const body = $('#sendBody');
+  $('#sendModal').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+  body.innerHTML = '<p class="text-sm text-gray-400 flex items-center gap-2"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>Conectando…</p>'; icons();
+  let cfg;
+  try { cfg = await api('config'); }
+  catch { body.innerHTML = '<p class="text-sm text-red-300">No se pudo conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.</p>'; return; }
+  if (!cfg.configured) { body.innerHTML = '<p class="text-sm text-amber-200">El capitán aún no ha activado la recepción de datos. Inténtalo más tarde.</p>'; return; }
+  const pending = m => !m.sentId || m.dirty;
+  body.innerHTML = `
+    <div>
+      <p class="lbl">¿Qué miembros envías?</p>
+      <div class="space-y-1.5">${state.members.map(m => `
+        <label class="flex items-center gap-3 rounded-lg border border-vcf-line px-3 py-2 cursor-pointer hover:border-vcf-orange/60">
+          <input type="checkbox" class="send-pick w-4 h-4 accent-orange-500" value="${m.id}" ${pending(m) ? 'checked' : ''}>
+          <span class="flex-1 text-sm font-semibold">${esc(m.name)}</span>
+          <span class="text-[11px] ${m.sentId ? (m.dirty ? 'text-amber-300' : 'text-vcf-goldlight') : 'text-gray-500'}">${m.sentId ? (m.dirty ? 'cambios sin enviar' : 'ya enviado') : 'no enviado'}</span>
+        </label>`).join('')}</div>
+    </div>
+    <div>
+      <label class="lbl" for="sendCode">Código de la penya</label>
+      <input id="sendCode" class="field uppercase" autocomplete="off" placeholder="Te lo da el capitán" value="${esc(store.get('nouMestalla_code', ''))}">
+    </div>
+    <label class="flex items-start gap-3 text-sm cursor-pointer">
+      <input id="sendConsent" type="checkbox" class="w-4 h-4 mt-0.5 accent-orange-500">
+      <span class="text-gray-300">Autorizo al capitán de la ${esc(state.groupName || 'penya')} a usar estos datos (incluidos ID y PIN) <b>solo</b> para registrar el grupo en el proceso del Nou Mestalla, y a borrarlos cuando termine. Puedo retirarlos cuando quiera.</span>
+    </label>
+    <div id="sendErr" class="hidden text-sm text-red-300"></div>
+    <div class="flex flex-wrap gap-2 justify-between items-center pt-1">
+      ${state.members.some(m => m.sentId) ? '<button type="button" id="sendWithdraw" class="text-xs text-gray-400 hover:text-red-400 underline">Retirar todos mis datos enviados</button>' : '<span></span>'}
+      <button type="button" id="sendGo" class="btn btn-primary"><i data-lucide="lock" class="w-4 h-4"></i>Cifrar y enviar</button>
+    </div>`;
+  icons();
+  const err = t => { const e = $('#sendErr'); e.textContent = t; e.classList.remove('hidden'); };
+  $('#sendWithdraw')?.addEventListener('click', async () => {
+    if (!confirm('¿Retirar del servidor todos los datos que has enviado desde este móvil?')) return;
+    for (const m of state.members.filter(x => x.sentId)) { await withdrawMember(m); delete m.sentId; delete m.sentToken; delete m.sentAt; delete m.dirty; }
+    save(); renderGroup(); closeSendModal();
+  });
+  $('#sendGo').addEventListener('click', async () => {
+    const ids = $$('.send-pick:checked').map(i => i.value);
+    const code = $('#sendCode').value.trim();
+    if (!ids.length) return err('Marca al menos un miembro.');
+    if (!code) return err('Escribe el código de la penya.');
+    if (!$('#sendConsent').checked) return err('Necesitamos tu autorización para enviar los datos.');
+    const btn = $('#sendGo'); btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>Enviando…'; icons();
+    try {
+      for (const id of ids) {
+        const m = state.members.find(x => x.id === id);
+        const data = Object.fromEntries(SEND_FIELDS.map(k => [k, m[k] ?? '']));
+        Object.assign(data, { groupName: state.groupName || '', consentAt: new Date().toISOString(), sentAt: new Date().toISOString() });
+        const payload = await encryptForCaptain(cfg.publicKey, data);
+        const r = await api('submit', { code, payload, id: m.sentId, token: m.sentToken });
+        Object.assign(m, { sentId: r.id, sentToken: r.token, sentAt: new Date().toISOString(), dirty: false });
+        save();
+      }
+      store.set('nouMestalla_code', code);
+      renderGroup(); closeSendModal();
+      toast(ids.length > 1 ? `${ids.length} miembros enviados al capitán` : 'Enviado al capitán');
+    } catch (e) {
+      err(e.message); renderGroup();
+      btn.disabled = false; btn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>Cifrar y enviar'; icons();
+    }
+  });
+}
+function closeSendModal() { $('#sendModal').classList.add('hidden'); document.body.style.overflow = ''; }
+$('#btnSend').addEventListener('click', openSendModal);
+$('#sendClose').addEventListener('click', closeSendModal);
+$('#sendModal').addEventListener('click', e => { if (e.target.id === 'sendModal') closeSendModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sendModal').classList.contains('hidden')) closeSendModal(); });
 
 function renderAll() { renderGroup(); renderTiers(); renderSector(); }
 

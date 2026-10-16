@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Acceso del Capitán</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#111111">
+<link rel="icon" type="image/png" href="escudo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>
+  tailwind.config = { theme: { extend: {
+    colors: { vcf: { black: '#111111', card: '#181818', line: '#2a2a2a', orange: '#FF6600', gold: '#C9A227', goldlight: '#E6C766' } },
+    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], display: ['"Bebas Neue"', 'Inter', 'sans-serif'] }
+  } } };
+</script>
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<style>
+  html, body { background: #0b0b0b; color: #f4f4f4; }
+  .card { background: #181818; border: 1px solid #2a2a2a; border-radius: 1rem; }
+  .field { width: 100%; background: #0f0f0f; border: 1px solid #333; border-radius: .65rem; padding: .65rem .8rem; color: #fff; font-size: .95rem; }
+  .field:focus { outline: none; border-color: #FF6600; box-shadow: 0 0 0 3px rgba(255,102,0,.18); }
+  .lbl { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: #9a9a9a; margin-bottom: .3rem; font-weight: 600; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; border-radius: .7rem; padding: .6rem 1rem; font-weight: 600; font-size: .9rem; transition: all .15s; white-space: nowrap; }
+  .btn:disabled { opacity: .6; cursor: wait; }
+  .btn-primary { background: #FF6600; color: #111; } .btn-primary:hover { background: #ff7a22; }
+  .btn-ghost { background: #222; color: #eee; border: 1px solid #333; } .btn-ghost:hover { border-color: #FF6600; }
+  .btn-danger { background: rgba(239,68,68,.12); color: #fca5a5; border: 1px solid rgba(239,68,68,.35); } .btn-danger:hover { background: rgba(239,68,68,.22); }
+  .badge { display: inline-flex; align-items: center; gap: .25rem; font-size: .7rem; font-weight: 700; padding: .15rem .5rem; border-radius: 999px; }
+  .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.simple th { font-size: .66rem; text-transform: uppercase; letter-spacing: .05em; color: #9a9a9a; font-weight: 700; text-align: left; padding: .5rem .55rem; border-bottom: 1px solid #2a2a2a; white-space: nowrap; }
+  table.simple td { padding: .55rem .55rem; border-bottom: 1px solid #222; font-size: .84rem; white-space: nowrap; vertical-align: top; }
+  .toast { transition: all .25s; }
+</style>
+</head>
+<body class="font-sans min-h-screen">
+
+<header class="border-b border-vcf-line" style="background: radial-gradient(circle at 85% -20%, rgba(201,162,39,.22), transparent 55%), linear-gradient(180deg,#141414,#0b0b0b);">
+  <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+    <a href="./" class="flex items-center gap-3 min-w-0">
+      <img src="escudo.png" alt="" class="w-11 h-11 rounded-lg bg-white p-0.5 object-contain shrink-0">
+      <div class="min-w-0">
+        <p class="text-[11px] uppercase tracking-[.18em] text-vcf-gold font-semibold">Zona privada</p>
+        <h1 class="font-display text-2xl sm:text-3xl leading-none tracking-wide truncate">Acceso del Capitán</h1>
+      </div>
+    </a>
+    <div class="flex gap-2">
+      <a href="./" class="btn btn-ghost !px-3" title="Volver a la app"><i data-lucide="arrow-left" class="w-4 h-4"></i><span class="hidden sm:inline">Volver</span></a>
+      <button id="btnLogout" class="btn btn-ghost !px-3 hidden"><i data-lucide="log-out" class="w-4 h-4"></i><span class="hidden sm:inline">Salir</span></button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 py-6">
+  <div id="loading" class="text-center text-gray-400 py-16"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto"></i></div>
+
+  <!-- ============ CONFIGURACIÓN INICIAL ============ -->
+  <section id="setupView" class="hidden max-w-xl mx-auto">
+    <form id="setupForm" class="card p-5 sm:p-6 space-y-4" autocomplete="off">
+      <h2 class="font-display text-3xl tracking-wide flex items-center gap-2"><i data-lucide="database" class="w-6 h-6 text-vcf-gold"></i>Activar la base de datos</h2>
+      <p class="text-sm text-gray-300">Esto se hace <b>una sola vez</b>. Se generará en este navegador una pareja de claves: la pública la usarán los socios para cifrar sus datos y la privada quedará protegida con tu contraseña.</p>
+      <div>
+        <label class="lbl" for="sToken">Token de configuración</label>
+        <input id="sToken" class="field font-mono" required autocomplete="off" placeholder="Te lo dio quien montó la web">
+      </div>
+      <div>
+        <label class="lbl" for="sCode">Código de la penya (para los socios)</label>
+        <input id="sCode" class="field uppercase" required minlength="4" maxlength="40" placeholder="Ej. BENAGEBER1919">
+        <p class="text-[11px] text-gray-500 mt-1">Compártelo con los socios. Sirve para que nadie de fuera pueda enviar datos. No da acceso a leerlos.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div>
+          <label class="lbl" for="sPass">Contraseña de capitán</label>
+          <input id="sPass" type="password" class="field" required minlength="10" autocomplete="new-password">
+        </div>
+        <div>
+          <label class="lbl" for="sPass2">Repite la contraseña</label>
+          <input id="sPass2" type="password" class="field" required minlength="10" autocomplete="new-password">
+        </div>
+      </div>
+      <p id="passMeter" class="text-[11px] text-gray-500 -mt-2">Mínimo 10 caracteres. Mejor una frase larga que solo tú recuerdes.</p>
+      <div class="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200 flex gap-2">
+        <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
+        <span><b>Si pierdes la contraseña, los datos no se pueden recuperar</b> (ni siquiera quien montó la web puede). Habría que reiniciar la base de datos y que los socios volvieran a enviar sus datos. Apúntala en un lugar seguro.</span>
+      </div>
+      <div id="setupErr" class="hidden text-sm text-red-300"></div>
+      <button id="setupBtn" class="btn btn-primary w-full"><i data-lucide="key-round" class="w-4 h-4"></i>Generar claves y activar</button>
+    </form>
+  </section>
+
+  <!-- ============ LOGIN ============ -->
+  <section id="loginView" class="hidden max-w-md mx-auto">
+    <form id="loginForm" class="card p-5 sm:p-6 space-y-4">
+      <h2 class="font-display text-3xl tracking-wide flex items-center gap-2"><i data-lucide="lock" class="w-6 h-6 text-vcf-gold"></i>Entrar</h2>
+      <p class="text-sm text-gray-400">Los datos de los socios están cifrados. Se descifran solo en este navegador con tu contraseña.</p>
+      <input type="text" name="username" value="capitan" autocomplete="username" class="hidden" aria-hidden="true">
+      <div>
+        <label class="lbl" for="lPass">Contraseña de capitán</label>
+        <input id="lPass" type="password" class="field" required autocomplete="current-password" autofocus>
+      </div>
+      <div id="loginErr" class="hidden text-sm text-red-300"></div>
+      <button id="loginBtn" class="btn btn-primary w-full"><i data-lucide="unlock" class="w-4 h-4"></i>Desbloquear</button>
+    </form>
+    <details class="mt-6 card p-4 text-sm">
+      <summary class="cursor-pointer text-gray-400">¿Has perdido la contraseña? Reiniciar todo</summary>
+      <div class="mt-3 space-y-3">
+        <p class="text-xs text-gray-400">Borra la configuración y <b>todos</b> los datos recibidos. Después podrás activarla de nuevo y los socios tendrán que volver a enviar sus datos. Necesitas el token de configuración.</p>
+        <input id="rToken" class="field font-mono" placeholder="Token de configuración" autocomplete="off">
+        <button id="resetBtn" class="btn btn-danger w-full"><i data-lucide="bomb" class="w-4 h-4"></i>Reiniciar base de datos</button>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ DATOS ============ -->
+  <section id="dataView" class="hidden space-y-5">
+    <div class="grid gap-4 md:grid-cols-4">
+      <div class="card p-4 md:col-span-2">
+        <p class="lbl">Número de socio promedio (todos los recibidos)</p>
+        <div id="dPrio" class="font-display text-6xl leading-none text-vcf-orange">—</div>
+        <p id="dPrioNote" class="text-xs text-gray-400 mt-1"></p>
+      </div>
+      <div class="card p-4"><p class="lbl">Miembros recibidos</p><div id="dCount" class="font-display text-5xl leading-none">0</div><p id="dDup" class="text-xs text-amber-300 mt-1"></p></div>
+      <div class="card p-4"><p class="lbl">Invitación aceptada</p><div id="dAcc" class="font-display text-5xl leading-none text-emerald-400">0</div><p id="dPmr" class="text-xs text-sky-300 mt-1"></p></div>
+    </div>
+
+    <div class="card p-4 flex flex-wrap gap-2 items-center">
+      <button id="btnRefresh" class="btn btn-ghost"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Actualizar</button>
+      <button id="btnEye" class="btn btn-ghost"><i data-lucide="eye-off" class="w-4 h-4"></i><span>Mostrar ID/PIN</span></button>
+      <button id="btnCsv" class="btn btn-primary"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i>Exportar Excel/CSV</button>
+      <button id="btnLoad" class="btn btn-ghost" title="Copia estos miembros a la pestaña Agrupación de la app en este navegador"><i data-lucide="users" class="w-4 h-4"></i>Cargar en mi Agrupación</button>
+      <button id="btnPurge" class="btn btn-danger sm:ml-auto"><i data-lucide="trash-2" class="w-4 h-4"></i>Borrar todos los datos</button>
+    </div>
+
+    <div class="card p-2 sm:p-3">
+      <div class="scroll-x">
+        <table class="simple w-full" id="table"></table>
+      </div>
+      <p id="empty" class="hidden text-center text-gray-400 py-10">Aún no ha enviado datos ningún socio. Comparte el enlace de la app y el código de la penya.</p>
+    </div>
+    <p class="text-[11px] text-gray-500 text-center">Los datos se descifran solo en este navegador y se bloquean al cerrar sesión, al recargar o tras 15 minutos sin actividad. Cuando termine la Fase 1, bórralos con «Borrar todos los datos».</p>
+  </section>
+</main>
+
+<div id="toast" class="toast fixed left-1/2 -translate-x-1/2 bottom-8 z-50 opacity-0 pointer-events-none translate-y-2 bg-white text-black text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl"></div>
+
+<script>
+/* ---------- Utilidades ---------- */
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const icons = () => { if (window.lucide) lucide.createIcons(); };
+const fmtNum = (n, d = 0) => { const [i, f] = Math.abs(n).toFixed(d).split('.'); return (n < 0 ? '-' : '') + i.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (f ? ',' + f : ''); };
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.remove('opacity-0', 'translate-y-2'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('opacity-0', 'translate-y-2'), 2600); }
+function show(view) { ['loading', 'setupView', 'loginView', 'dataView'].forEach(v => $('#' + v).classList.toggle('hidden', v !== view)); $('#btnLogout').classList.toggle('hidden', view !== 'dataView'); icons(); }
+async function api(path, body) {
+  const r = await fetch('/api/' + path, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : { cache: 'no-store' });
+  let d = {}; try { d = await r.json(); } catch {}
+  if (!r.ok) throw new Error(d.error || `Error ${r.status}`);
+  return d;
+}
+function busy(btn, on, html) { btn.disabled = on; if (html) btn.innerHTML = html; icons(); }
+
+/* ---------- Criptografía (WebCrypto) ---------- */
+const enc = new TextEncoder(), dec = new TextDecoder();
+const b64 = buf => { let s = ''; new Uint8Array(buf).forEach(b => { s += String.fromCharCode(b); }); return btoa(s); };
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const rand = n => crypto.getRandomValues(new Uint8Array(n));
+const ITER = 600000; // PBKDF2-SHA256 (recomendación OWASP)
+async function pbkdf2Key(password) { return crypto.subtle.importKey('raw', enc.encode(password.normalize('NFC')), 'PBKDF2', false, ['deriveBits', 'deriveKey']); }
+async function authToken(password, saltB64, iter) {
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: unb64(saltB64), iterations: iter }, await pbkdf2Key(password), 256);
+  return b64(bits);
+}
+async function kek(password, saltB64, iter) {
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', hash: 'SHA-256', salt: unb64(saltB64), iterations: iter }, await pbkdf2Key(password), { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+
+/* ---------- Estado de sesión (solo en memoria) ---------- */
+let cfg = null, session = null, rows = [], showSensitive = false, idleT;
+function resetIdle() { clearTimeout(idleT); if (session) idleT = setTimeout(() => { logout(); toast('Sesión bloqueada por inactividad'); }, 15 * 60e3); }
+['click', 'keydown', 'touchstart', 'scroll'].forEach(ev => addEventListener(ev, resetIdle, { passive: true }));
+function logout() { session = null; rows = []; $('#table').innerHTML = ''; $('#lPass').value = ''; show('loginView'); }
+$('#btnLogout').addEventListener('click', logout);
+
+/* ---------- Arranque ---------- */
+(async () => {
+  try { cfg = await api('config'); }
+  catch (e) { $('#loading').innerHTML = `<p class="text-red-300">No se pudo conectar con el servidor: ${esc(e.message)}</p>`; return; }
+  show(cfg.configured ? 'loginView' : 'setupView');
+})();
+
+/* ---------- Configuración inicial ---------- */
+$('#sPass').addEventListener('input', e => {
+  const p = e.target.value, score = (p.length >= 10) + (p.length >= 16) + /[A-Z]/.test(p) + /[0-9]/.test(p) + /[^A-Za-z0-9]/.test(p);
+  $('#passMeter').textContent = p.length < 10 ? `Mínimo 10 caracteres (llevas ${p.length}).` : ['Débil', 'Débil', 'Aceptable', 'Buena', 'Muy buena', 'Excelente'][score];
+});
+$('#setupForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const err = t => { $('#setupErr').textContent = t; $('#setupErr').classList.remove('hidden'); };
+  const token = $('#sToken').value.trim(), code = $('#sCode').value.trim(), p1 = $('#sPass').value, p2 = $('#sPass2').value;
+  if (p1.length < 10) return err('La contraseña debe tener al menos 10 caracteres.');
+  if (p1 !== p2) return err('Las contraseñas no coinciden.');
+  if (code.length < 4) return err('El código de la penya debe tener al menos 4 caracteres.');
+  const btn = $('#setupBtn'); busy(btn, true, '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>Generando claves…');
+  try {
+    const pair = await crypto.subtle.generateKey({ name: 'RSA-OAEP', modulusLength: 3072, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['encrypt', 'decrypt']);
+    const spki = await crypto.subtle.exportKey('spki', pair.publicKey);
+    const pkcs8 = await crypto.subtle.exportKey('pkcs8', pair.privateKey);
+    const salt = b64(rand(16)), iv = rand(12), authSalt = b64(rand(16));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await kek(p1, salt, ITER), pkcs8);
+    await api('setup', {
+      setupToken: token, code, publicKey: b64(spki),
+      encPriv: { salt, iv: b64(iv), ct: b64(ct), iter: ITER },
+      authSalt, authIter: ITER, authToken: await authToken(p1, authSalt, ITER)
+    });
+    $('#setupForm').reset();
+    cfg = await api('config');
+    toast('Base de datos activada');
+    show('loginView');
+  } catch (ex) { err(ex.message); }
+  finally { busy(btn, false, '<i data-lucide="key-round" class="w-4 h-4"></i>Generar claves y activar'); }
+});
+
+/* ---------- Login y descifrado ---------- */
+async function decryptRecord(priv, r) {
+  try {
+    const raw = await crypto.subtle.decrypt({ name: 'RSA-OAEP' }, priv, unb64(r.payload.wk));
+    const aes = await crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt']);
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(r.payload.iv) }, aes, unb64(r.payload.ct));
+    return { id: r.id, createdAt: r.createdAt, updatedAt: r.updatedAt, data: JSON.parse(dec.decode(pt)) };
+  } catch { return { id: r.id, createdAt: r.createdAt, updatedAt: r.updatedAt, error: true }; }
+}
+async function load(password) {
+  const tok = session?.token || await authToken(password, cfg.authSalt, cfg.authIter);
+  const res = await api('admin', { action: 'login', authToken: tok });
+  let priv = session?.priv;
+  if (!priv) {
+    const e = res.encPriv;
+    const pkcs8 = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(e.iv) }, await kek(password, e.salt, e.iter), unb64(e.ct));
+    priv = await crypto.subtle.importKey('pkcs8', pkcs8, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['decrypt']);
+  }
+  session = { token: tok, priv };
+  rows = await Promise.all(res.records.map(r => decryptRecord(priv, r)));
+  rows.sort((a, b) => (a.data?.role === 'capitan' ? -1 : 0) - (b.data?.role === 'capitan' ? -1 : 0) || String(a.data?.name).localeCompare(String(b.data?.name), 'es'));
+  render(); resetIdle();
+}
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = $('#loginBtn'); $('#loginErr').classList.add('hidden');
+  busy(btn, true, '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>Descifrando…');
+  try { await load($('#lPass').value); $('#lPass').value = ''; show('dataView'); }
+  catch (ex) { session = null; $('#loginErr').textContent = ex.message; $('#loginErr').classList.remove('hidden'); }
+  finally { busy(btn, false, '<i data-lucide="unlock" class="w-4 h-4"></i>Desbloquear'); }
+});
+$('#btnRefresh').addEventListener('click', async () => { try { await load(); toast('Datos actualizados'); } catch (e) { toast(e.message); } });
+
+/* ---------- Reglas de prioridad (iguales que en la app) ---------- */
+const MINOR_CUTOFF = '2011-06-01', WAITING = 40000, HIST_MAX = 5;
+const isMinor = m => m.category === 'menor' || (m.birth && m.birth >= MINOR_CUTOFF);
+function calcPriority(ms) {
+  const hist = ms.filter(m => m.category === 'historico' && Number(m.socioNum) > 0);
+  if (hist.length && ms.length <= HIST_MAX) return { mode: 'historico', value: Math.min(...hist.map(m => Number(m.socioNum))) };
+  const vals = ms.filter(m => !isMinor(m)).map(m => m.category === 'espera' ? WAITING : Number(m.socioNum) || 0).filter(Boolean);
+  return vals.length ? { mode: 'promedio', value: vals.reduce((a, b) => a + b, 0) / vals.length, count: vals.length } : { mode: 'none' };
+}
+
+/* ---------- Render ---------- */
+const L = {
+  role: { capitan: 'Capitán', miembro: 'Miembro' }, status: { aceptada: 'Aceptada', pendiente: 'Pendiente' },
+  category: { general: 'General', menor: 'Menor de 16', historico: 'Histórico', espera: 'Lista espera 2007' },
+  age: { adulto: 'Adulto', juvenil: 'Juvenil', infantil: 'Infantil', senior: '+65' }
+};
+const fdate = s => s ? new Date(s).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+const secret = v => !v ? '<span class="text-gray-600">—</span>' : showSensitive ? `<span class="font-mono">${esc(v)}</span>` : '<span class="font-mono tracking-widest text-gray-500">••••</span>';
+function render() {
+  const ok = rows.filter(r => r.data), ms = ok.map(r => r.data);
+  // Posibles duplicados (mismo ID o mismo nº de socio)
+  const seen = {}; ok.forEach(r => { [r.data.socioId && 'id:' + r.data.socioId, r.data.socioNum && 'n:' + r.data.socioNum].filter(Boolean).forEach(k => (seen[k] = (seen[k] || 0) + 1)); });
+  const isDup = d => (d.socioId && seen['id:' + d.socioId] > 1) || (d.socioNum && seen['n:' + d.socioNum] > 1);
+  const dups = ok.filter(r => isDup(r.data)).length;
+  const p = calcPriority(ms);
+  $('#dPrio').textContent = p.mode === 'none' ? '—' : fmtNum(Math.round(p.value));
+  $('#dPrioNote').textContent = p.mode === 'historico' ? 'Excepción de abonado histórico (grupo ≤ 5)' : p.mode === 'promedio' ? `Media exacta ${fmtNum(p.value, 2)} · ${p.count} computables${dups ? ' · revisa los duplicados' : ''}` : 'Sin miembros computables';
+  $('#dCount').textContent = ms.length;
+  $('#dDup').textContent = dups ? `⚠ ${dups} posibles duplicados` : '';
+  $('#dAcc').textContent = ms.filter(m => m.status === 'aceptada' || m.role === 'capitan').length;
+  $('#dPmr').textContent = ms.some(m => m.pmr) ? `♿ ${ms.filter(m => m.pmr).length} con PMR` : '';
+  $('#btnEye').innerHTML = `<i data-lucide="${showSensitive ? 'eye' : 'eye-off'}" class="w-4 h-4"></i><span>${showSensitive ? 'Ocultar' : 'Mostrar'} ID/PIN</span>`;
+  $('#empty').classList.toggle('hidden', rows.length > 0);
+  $('#table').innerHTML = !rows.length ? '' : `<thead><tr><th>Nombre</th><th>Rol / estado</th><th>ID socio</th><th>PIN</th><th>Nº socio</th><th>Categoría</th><th>Nacimiento</th><th>Tarifa</th><th>Dtos.</th><th>PMR</th><th>Enviado por</th><th>Recibido</th><th></th></tr></thead><tbody>` +
+    rows.map(r => {
+      if (r.error) return `<tr><td colspan="12" class="text-red-300">Registro que no se puede descifrar (enviado con otra clave)</td><td><button class="del text-gray-400 hover:text-red-400" data-id="${r.id}" aria-label="Borrar"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`;
+      const d = r.data, dtos = [d.attendance && d.attendance !== '0' ? `Asist. ${d.attendance}%` : '', d.shareholder ? 'Accionista' : '', Number(d.alBalance) ? `AL ${fmtNum(Number(d.alBalance), 2)} €` : ''].filter(Boolean).join(' · ');
+      return `<tr class="${isDup(d) ? 'bg-amber-500/5' : ''}">
+        <td class="font-semibold">${d.role === 'capitan' ? '👑 ' : ''}${esc(d.name)}${isDup(d) ? ' <span class="badge bg-amber-500/15 text-amber-300">duplicado?</span>' : ''}</td>
+        <td>${esc(L.role[d.role] || '')} · <span class="${d.status === 'aceptada' || d.role === 'capitan' ? 'text-emerald-400' : 'text-amber-300'}">${esc(d.role === 'capitan' ? 'Aceptada' : L.status[d.status] || '')}</span></td>
+        <td>${secret(d.socioId)}</td><td>${secret(d.pin)}</td>
+        <td class="font-display text-lg">${d.socioNum ? fmtNum(Number(d.socioNum)) : '—'}</td>
+        <td>${esc(L.category[d.category] || '')}</td>
+        <td>${d.birth ? esc(d.birth.split('-').reverse().join('/')) : '—'}</td>
+        <td>${esc(L.age[d.ageTariff] || '')}</td>
+        <td class="text-xs text-gray-300">${esc(dtos) || '—'}</td>
+        <td>${d.pmr ? '♿' : ''}</td>
+        <td class="text-xs text-gray-400">${esc(d.groupName || '')}</td>
+        <td class="text-xs text-gray-400">${fdate(r.updatedAt || r.createdAt)}</td>
+        <td><button class="del text-gray-400 hover:text-red-400" data-id="${r.id}" aria-label="Borrar registro"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
+      </tr>`;
+    }).join('') + '</tbody>';
+  $$('#table .del').forEach(b => b.addEventListener('click', async () => {
+    const r = rows.find(x => x.id === b.dataset.id);
+    if (!confirm(`¿Borrar el registro de ${r?.data?.name || 'este socio'}? No se puede deshacer.`)) return;
+    try { await api('admin', { action: 'delete', id: r.id, authToken: session.token }); rows = rows.filter(x => x.id !== r.id); render(); toast('Registro borrado'); }
+    catch (e) { toast(e.message); }
+  }));
+  icons();
+}
+$('#btnEye').addEventListener('click', () => { showSensitive = !showSensitive; render(); });
+
+/* ---------- Exportar, cargar y purgar ---------- */
+$('#btnCsv').addEventListener('click', () => {
+  const ok = rows.filter(r => r.data); if (!ok.length) return toast('No hay datos que exportar');
+  const q = v => { const s = String(v ?? ''); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const head = ['Nombre', 'Rol', 'Estado', 'ID socio', 'PIN', 'Nº socio', 'Fecha nacimiento', 'Categoría', 'Tarifa edad', 'Asistencia 26-27', 'Accionista', 'Saldo Asiento Libre (€)', 'Renovación actual (€)', 'PMR', 'Enviado por (grupo)', 'Recibido'];
+  const lines = ok.map(({ data: d, updatedAt, createdAt }) => [d.name, L.role[d.role], d.role === 'capitan' ? 'Aceptada' : L.status[d.status], d.socioId, d.pin, d.socioNum, d.birth, L.category[d.category], L.age[d.ageTariff], d.attendance === '0' ? 'No' : d.attendance + '%', d.shareholder ? 'Sí' : 'No', String(d.alBalance || 0).replace('.', ','), String(d.alRenewal || '').replace('.', ','), d.pmr ? 'Sí' : 'No', d.groupName, fdate(updatedAt || createdAt)].map(q).join(';'));
+  const p = calcPriority(ok.map(r => r.data));
+  const csv = '﻿' + [head.join(';'), ...lines].join('\r\n') + (p.mode === 'none' ? '' : `\r\n\r\nNº socio promedio;${String(Math.round(p.value * 100) / 100).replace('.', ',')}`);
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = `socios-penya-${new Date().toISOString().slice(0, 10)}.csv`; document.body.appendChild(a); a.click(); a.remove();
+  toast('CSV descargado. Contiene IDs y PINs: guárdalo con cuidado y bórralo al terminar.');
+});
+$('#btnLoad').addEventListener('click', () => {
+  const ok = rows.filter(r => r.data); if (!ok.length) return toast('No hay datos que cargar');
+  if (!confirm('Esto sustituye la lista de la pestaña Agrupación de la app en ESTE navegador por los miembros recibidos. ¿Continuar?')) return;
+  const KEY = 'nouMestalla_agrupacion_v1';
+  let st = {}; try { st = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
+  st.members = ok.map(({ id, data: d }) => ({
+    id, name: d.name, role: d.role, status: d.status, socioId: d.socioId, pin: d.pin, socioNum: d.socioNum, birth: d.birth,
+    ageTariff: d.ageTariff, category: d.category, attendance: d.attendance, shareholder: !!d.shareholder,
+    alBalance: Number(d.alBalance) || 0, alRenewal: Number(d.alRenewal) || 0, pmr: !!d.pmr
+  }));
+  try { localStorage.setItem(KEY, JSON.stringify(st)); toast(`${ok.length} miembros cargados en la app`); }
+  catch { toast('No se pudo guardar en este navegador'); }
+});
+$('#btnPurge').addEventListener('click', async () => {
+  if (prompt('Se borrarán TODOS los datos recibidos de los socios. Escribe BORRAR para confirmar:') !== 'BORRAR') return;
+  try { const r = await api('admin', { action: 'purge', authToken: session.token }); rows = []; render(); toast(`${r.deleted} registros borrados`); }
+  catch (e) { toast(e.message); }
+});
+
+/* ---------- Reinicio total ---------- */
+$('#resetBtn').addEventListener('click', async () => {
+  const token = $('#rToken').value.trim(); if (!token) return toast('Escribe el token de configuración');
+  if (prompt('Se borrará la configuración y TODOS los datos. Escribe REINICIAR para confirmar:') !== 'REINICIAR') return;
+  try { await api('reset', { setupToken: token }); cfg = await api('config'); toast('Base de datos reiniciada'); $('#rToken').value = ''; show('setupView'); }
+  catch (e) { toast(e.message); }
+});
+</script>
+</body>
+</html>
