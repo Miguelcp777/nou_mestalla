@@ -3,3 +3,4 @@ _test_*
 .netlify/
 node_modules/
 .env
+deno.lock
